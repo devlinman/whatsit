@@ -1,0 +1,87 @@
+#+TITLE: Mr. Whatsit
+#+DESCRIPTION: Name Inspired by the series Stranger Things S5
+#+AUTHOR: devlinman
+#+OPTIONS: toc:nil num:nil
+
+* Whatsit
+
+- A lightweight, native desktop client for WhatsApp Web built with Qt 6 and Qt WebEngine.
+
+- whatsit is not Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
+
+- Name Inspired by the series Stranger Things S5.
+
+- I tried many Whatsapp web clients, but none of them are fast and light.
+  I don't need a system tray... I don't need notifications...
+
+* Features
+
+- Native Qt 6 application
+- Qt WebEngine-based (Chromium)
+- Persistent login and chat storage
+- Uses standard XDG directories
+- KDE / Wayland friendly
+- Dark mode support via configuration
+- Very low overhead compared to Electron apps
+
+* Storage Locations
+
+- Config:
+  =~/.config/whatsit/whatsit.conf=
+- Data (cookies, IndexedDB, sessions):
+  =~/.local/share/whatsit/=
+- Cache:
+  =~/.cache/whatsit/=
+
+* Configuration
+
+Currently supported options:
+
+#+BEGIN_SRC ini
+[General]
+PreferDarkMode=1
+#+END_SRC
+
+* Limitations
+
+- No system tray integration
+- No native notification support
+- No account switching UI
+- No custom theming UI
+- WhatsApp Web only (no native WhatsApp protocol)
+
+These are intentional to keep the application minimal and fast.
+
+* Requirements
+
+- Linux
+- Qt >= 6.2
+- qt6-base
+- qt6-webengine
+- CMake
+- C++17 compatible compiler
+
+* Build
+
+#+BEGIN_SRC sh
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+./whatsit
+#+END_SRC
+
+* Philosophy
+
+whatsit is designed to be:
+- Fast
+- Minimal
+- Native
+- Maintainable
+
+It delegates all heavy lifting to Qt WebEngine and avoids unnecessary abstraction layers.
+
+* License
+
+- This project is licensed under the MIT license.
+- Check Licensing information at [[./LICENSE][LICENSE]].

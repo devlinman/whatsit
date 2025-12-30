@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Whatsit
+Comment=WhatsApp Web desktop client
+Exec=whatsit
+Icon=whatsit
+Categories=Network;InstantMessaging;
+Terminal=false
+StartupWMClass=whatsit
