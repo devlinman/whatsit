@@ -35,20 +35,32 @@
 
 * Configuration
 
-Currently supported options:
+- Config file located at =~/.config/whatsit/whatsit.conf=. It is generated automatically on first run.
+
+- Defaults for all keys are "=0=".
+
+- If no Size parameter is set, the app defaults to 1200x800.
+
+- If =MaximizeByDefault= key is set to "=1=", it overrides =RememberPreviousWindowSize= key.
+
+- Example config:
 
 #+BEGIN_SRC ini
-[General]
+[%General]
 PreferDarkMode=1
+
+[Window]
+MaximizeByDefault=1
+RememberPreviousWindowSize=1
+
+Size=@Size(1200 800)
 #+END_SRC
 
 * Limitations
 
-- No system tray integration
-- No native notification support
-- No account switching UI
-- No custom theming UI
-- WhatsApp Web only (no native WhatsApp protocol)
+- No system tray integration.
+- No native notification support.
+- No support for multiple accounts.
 
 These are intentional to keep the application minimal and fast.
 
@@ -69,6 +81,9 @@ cd build
 cmake ..
 make -j$(nproc)
 ./whatsit
+
+# Install the App.
+sudo make install
 #+END_SRC
 
 * Philosophy

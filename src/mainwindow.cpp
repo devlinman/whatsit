@@ -4,11 +4,13 @@
 #include <QWebEngineProfile>
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
-#include <QWebEngineSettings>
 
 #include <QStandardPaths>
 #include <QDir>
 #include <QUrl>
+
+static constexpr int DEFAULT_WIDTH  = 1200;
+static constexpr int DEFAULT_HEIGHT = 800;
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent),
@@ -19,11 +21,61 @@ settings(QSettings::IniFormat,
          "whatsit",
          "whatsit")
 {
-    resize(1200, 800);
+    setMinimumSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+    initializeConfigDefaults();
+    restoreWindowFromConfig();
+
     setCentralWidget(view);
 
     setupWebEngine();
     view->load(QUrl("https://web.whatsapp.com"));
+}
+
+void MainWindow::initializeConfigDefaults()
+{
+    // General section
+    settings.beginGroup("General");
+    if (!settings.contains("PreferDarkMode"))
+        settings.setValue("PreferDarkMode", 0);
+    settings.endGroup();
+
+    // Window section
+    settings.beginGroup("Window");
+    if (!settings.contains("RememberPreviousWindowSize"))
+        settings.setValue("RememberPreviousWindowSize", 0);
+    if (!settings.contains("MaximizeByDefault"))
+        settings.setValue("MaximizeByDefault", 0);
+    settings.endGroup();
+
+    settings.sync();
+}
+
+void MainWindow::restoreWindowFromConfig()
+{
+    settings.beginGroup("Window");
+
+    const bool rememberSize =
+    settings.value("RememberPreviousWindowSize").toBool();
+    const bool maximizeByDefault =
+    settings.value("MaximizeByDefault").toBool();
+
+    const QSize storedSize =
+    settings.value("Size", QSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)).toSize();
+
+    settings.endGroup();
+
+    if (maximizeByDefault) {
+        showMaximized();
+        return;
+    }
+
+    if (rememberSize) {
+        resize(storedSize.expandedTo(
+            QSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)));
+    } else {
+        resize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    }
 }
 
 void MainWindow::setupWebEngine()
@@ -38,13 +90,11 @@ void MainWindow::setupWebEngine()
 
     profile = new QWebEngineProfile("whatsit-profile", this);
 
-    // ✅ Persistent storage
     profile->setPersistentStoragePath(dataPath);
     profile->setCachePath(cachePath);
     profile->setPersistentCookiesPolicy(
         QWebEngineProfile::ForcePersistentCookies);
 
-    // ✅ Force modern Chromium User-Agent for WhatsApp Web compatibility
     profile->setHttpUserAgent(
         "Mozilla/5.0 (X11; Linux x86_64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -61,7 +111,7 @@ void MainWindow::applyDarkModeIfNeeded()
 {
     settings.beginGroup("General");
     const bool preferDark =
-    settings.value("PreferDarkMode", true).toBool();
+    settings.value("PreferDarkMode").toBool();
     settings.endGroup();
 
     if (!preferDark)
@@ -81,4 +131,25 @@ void MainWindow::applyDarkModeIfNeeded()
     )JS");
 
     profile->scripts()->insert(script);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    saveWindowToConfig();
+    QMainWindow::closeEvent(event);
+}
+
+void MainWindow::saveWindowToConfig()
+{
+    settings.beginGroup("Window");
+
+    const bool rememberSize =
+    settings.value("RememberPreviousWindowSize").toBool();
+
+    if (rememberSize && !isMaximized()) {
+        settings.setValue("Size", size());
+    }
+
+    settings.endGroup();
+    settings.sync();
 }
