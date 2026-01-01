@@ -105,7 +105,7 @@ It delegates all heavy lifting to Qt WebEngine and avoids unnecessary abstractio
 - The [[./resources/whatsit.png][icon]] used in this project was grabbed off the internet.
 
 * Improvements
-- [X] Title bar menu.
+- [x] Title bar menu.
 - [X] IPC. Keybinds. Links.
 - [X] Notifications.
 - [X] Downloads.
