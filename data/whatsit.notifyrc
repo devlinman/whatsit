@@ -1,0 +1,11 @@
+# whatsit.notifyrc
+[Global]
+Name=Whatsit
+IconName=whatsit
+Comment=WhatsApp Web Client
+
+[Event/whatsapp-message]
+Name=New WhatsApp Message
+Comment=Incoming WhatsApp message
+Action=Popup
+Urgency=Normal

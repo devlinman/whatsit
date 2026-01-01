@@ -86,6 +86,7 @@ make -j$(nproc)
 sudo make install
 #+END_SRC
 
+
 * Philosophy
 
 whatsit is designed to be:
@@ -100,3 +101,19 @@ It delegates all heavy lifting to Qt WebEngine and avoids unnecessary abstractio
 
 - This project is licensed under the MIT license.
 - Check Licensing information at [[./LICENSE][LICENSE]].
+- *Copyright Disclaimer: Whatsapp is not owned by me.*
+- The [[./resources/whatsit.png][icon]] used in this project was grabbed off the internet.
+
+* Improvements
+- [X] Title bar menu.
+- [X] IPC. Keybinds. Links.
+- [X] Notifications.
+- [X] Downloads.
+- [X] System tray.
+- [X] single instance.
+- [X] Autostart on login.
+- [X] Start minimized in tray.
+- [X] Reload cache and config.
+- [X] Remove profile and restart
+- [ ] Custom icons.
+- [ ] Search option

@@ -1,10 +1,13 @@
+// mainwindow.h
 #pragma once
 
 #include <QMainWindow>
 #include <QWebEngineView>
-#include <QWebEngineProfile>
-#include <QSettings>
-#include <QCloseEvent>
+
+#include "configmanager.h"
+#include "webenginehelper.h"
+#include "traymanager.h"
+#include "ipcmanager.h"
 
 class MainWindow : public QMainWindow
 {
@@ -12,20 +15,22 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override = default;
+    ~MainWindow() override;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
-    void setupWebEngine();
-    void applyDarkModeIfNeeded();
+    void setupMenus();
+    void handleExitRequest();
 
-    void initializeConfigDefaults();
-    void restoreWindowFromConfig();
-    void saveWindowToConfig();
+    // unified tray/window behavior
+    void showAndRaise();
 
     QWebEngineView *view;
-    QWebEngineProfile *profile;
-    QSettings settings;
+
+    ConfigManager config;
+    WebEngineHelper *web;
+    TrayManager *tray;
+    IpcManager *ipc;
 };

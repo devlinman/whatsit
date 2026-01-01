@@ -1,9 +1,11 @@
 [Desktop Entry]
 Type=Application
 Name=Whatsit
-Comment=WhatsApp Web desktop client
-Exec=whatsit
+Comment=WhatsApp Web Client
+Exec=/usr/bin/whatsit
 Icon=whatsit
-Categories=Network;InstantMessaging;
 Terminal=false
+Categories=Network;Chat;
+StartupNotify=true
 StartupWMClass=whatsit
+X-KDE-Notifications=whatsit

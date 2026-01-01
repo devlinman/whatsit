@@ -29,3 +29,7 @@ Thumbs.db
 
 # The binary
 whatsit
+
+# Ignore these folders
+/ignore
+/package
