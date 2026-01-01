@@ -5,115 +5,238 @@
 
 * Whatsit
 
-- A lightweight, native desktop client for WhatsApp Web built with Qt 6 and Qt WebEngine.
++ A lightweight, native desktop client for WhatsApp Web built with Qt 6 and Qt WebEngine.
 
-- whatsit is not Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
++ Whatsit is *not* Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
 
-- Name Inspired by the series Stranger Things S5.
++ Name Inspired by the series /Stranger Things S5/.
 
-- I tried many Whatsapp web clients, but none of them are fast and light.
-  I don't need a system tray... I don't need notifications...
++ I have tried many Whatsapp web clients, but none of them are fast and light.
++ +I don't need a system tray... I don't need notifications...+
 
-* Features
++ Turns out, I do need a system tray icon, and notifications. So they are implemented in =v2.0.0=.
 
-- Native Qt 6 application
-- Qt WebEngine-based (Chromium)
-- Persistent login and chat storage
-- Uses standard XDG directories
-- KDE / Wayland friendly
-- Dark mode support via configuration
-- Very low overhead compared to Electron apps
++ If you want the minimal and bare version, use =v1.0.1=.
 
-* Storage Locations
+** Philosophy
+*** Whatsit is designed to be:
++ Fast, Native, Maintainable.
++ It delegates all heavy lifting to Qt WebEngine.
++ Some JavaScript is injected to make dark mode and notifications work.
+** Features
 
-- Config:
-  =~/.config/whatsit/whatsit.conf=
-- Data (cookies, IndexedDB, sessions):
-  =~/.local/share/whatsit/=
-- Cache:
-  =~/.cache/whatsit/=
++ Native Qt 6 application
++ Qt WebEngine-based (Chromium)
++ Persistent login and chat storage
++ Uses standard XDG directories
++ KDE / Wayland friendly
++ Dark mode support via configuration
++ Very low overhead compared to Electron apps
+
+
+* Improvements in v 2.0.0
+** Title bar menu:
+*** General
++ Better dark mode toggle.
++ Remember Downloads path.
+
+*** View
++ Zoom controls.
+
+*** Window
++ Minimize to Tray on Close
+
+*** System
++ Autostart on login.
++ Start minimized in tray.
++ Notifications for new messages when app is out of focus or hidden.
+
+*** Advanced
++ Debugging to log file.
++ Reload cache and config.
++ Remove profile and restart.
+
+** Others
++ Single instance behaviour.
++ Tray icon toggles show/hide window on click.
++ =Ctrl+q= keybinding quits/closes the app.
++ Hyperlinks open in external browser.
+
+
+* Paths and Storage Locations
+** Files:
++ debug file at =~/.cache/whatsit/whatsit.log=
++ icon at =/usr/share/icons/hicolor/256x256/apps/whatsit.png=
++ desktop file at =/usr/share/applications/whatsit.desktop=
++ notifyrc at =/usr/share/knotifications6/whatsit.notifyrc=
++ binary at =/usr/bin/whatsit=
++ config file at =~/.config/whatsit/whatsit.ini=
+
+** Folders:
++ cache at =~/.cache/whatsit/whatsit=
++ profile and cookies at =~/.local/share/whatsit/whatsit=
+
 
 * Configuration
 
-- Config file located at =~/.config/whatsit/whatsit.conf=. It is generated automatically on first run.
++ Config file located at =~/.config/whatsit/whatsit.conf=.
++ It is generated automatically on first run.
 
-- Defaults for all keys are "=0=".
++ Example config:
 
-- If no Size parameter is set, the app defaults to 1200x800.
+#+begin_src ini
+[Debug]
+EnableFileLogging=false
 
-- If =MaximizeByDefault= key is set to "=1=", it overrides =RememberPreviousWindowSize= key.
-
-- Example config:
-
-#+BEGIN_SRC ini
 [%General]
-PreferDarkMode=1
+PreferDarkMode=true
+RememberDownloadPaths=true
+
+[System]
+AutostartOnLogin=false
+MinimizeToTray=true
+StartMinimizedInTray=true
+SystemNotifications=true
 
 [Window]
-MaximizeByDefault=1
-RememberPreviousWindowSize=1
-
-Size=@Size(1200 800)
-#+END_SRC
-
-* Limitations
-
-- No system tray integration.
-- No native notification support.
-- No support for multiple accounts.
-
-These are intentional to keep the application minimal and fast.
+MaximizedByDefault=true
+RememberWindowSize=true
+Size=@Size(1920 1046)
+ZoomLevel=1.4
+#+end_src
 
 * Requirements
 
-- Linux
-- Qt >= 6.2
-- qt6-base
-- qt6-webengine
-- CMake
-- C++17 compatible compiler
++ Linux
++ Qt >= 6.2
++ qt6-base
++ qt6-webengine
++ CMake
++ C++17 compatible compiler
 
 * Build
 
-#+BEGIN_SRC sh
+*** Build from Source
+#+begin_src shell
+# git clone and cd first.
+# Make sure you are in the repository root.
 mkdir build
 cd build
 cmake ..
 make -j$(nproc)
-./whatsit
 
 # Install the App.
 sudo make install
-#+END_SRC
+#+end_src
+
++ Installing the release package on Arch Linux (available in releases):
+  =sudo pacman -U <RELEASE_PACKAGE>=
+
++ If you installed the package using pacman, remove with:
+  =sudo pacman -R whatsit=
+
+*** PKGBUILD
++ To build using the PKGBUILD file given below, download it, and run:
+    =makepkg -si=
++ This PKGBUILD builds from latest commit on github (on master branch).
+
+#+begin_src shell
+# Created by devlinman
+pkgname=whatsit
+pkgver=
+pkgrel=1
+pkgdesc="whatsit"
+arch=('x86_64')
+license=('MIT')
+depends=()
+makedepends=('cmake' 'vulkan-headers')
+source=("git+https://github.com/devlinman/whatsit")
+sha256sums=(SKIP)
+
+build() {
+    cmake -S "/media/DATA/SOFTWARE/Programming/Projects/whatsit" -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+    cmake --build build
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
 
 
-* Philosophy
+#+end_src
 
-whatsit is designed to be:
-- Fast
-- Minimal
-- Native
-- Maintainable
 
-It delegates all heavy lifting to Qt WebEngine and avoids unnecessary abstraction layers.
+* Notes
++ For =Prefer Dark Mode= toggle to work, you need to enable dark theme in Whatsapp first.
+        + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
+        + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
+
++ Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
+
++ If no Size parameter is set, the app defaults to =1200x800=.
+
++ If =MaximizeByDefault= key is set to "=true=", it overrides =RememberPreviousWindowSize= key.
+
++ No support for multiple accounts/profiles.
+
+* Future updates
+- [ ] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
+- [ ] Delete debug file on app/profile change.
+- [ ] Search app menu from titlebar.
+- [ ] Option to toggle injection of JavaScript.
+- [ ] Memory kill switch option.
+- [ ] Lower memory usage in Tray/startup.
+- [ ] Custom app icon with instant updates. =/usr/share/icons/hicolor/256x256/apps/whatsit_custom.png=
+- [ ] Give another url to open it as a webapp.
+
 
 * License
++ This project is licensed under the MIT license.
++ Check Licensing information at [[./LICENSE][LICENSE]].
++ *Copyright Disclaimer: Whatsapp is not owned by me.*
++ The [[./resources/whatsit.png][icon]] used in this project was grabbed off the internet.
 
-- This project is licensed under the MIT license.
-- Check Licensing information at [[./LICENSE][LICENSE]].
-- *Copyright Disclaimer: Whatsapp is not owned by me.*
-- The [[./resources/whatsit.png][icon]] used in this project was grabbed off the internet.
+**** tldr;
+**** Use this app at your own risk.
+**** I will not be liable for any damages.
 
-* Improvements
-- [X] Title bar menu.
-- [X] IPC. Keybinds. Links.
-- [X] Notifications.
-- [X] Downloads.
-- [X] System tray.
-- [X] single instance.
-- [X] Autostart on login.
-- [X] Start minimized in tray.
-- [X] Reload cache and config.
-- [X] Remove profile and restart
-- [ ] Custom icons.
-- [ ] Search option
+* Size of binaries
+** Info
++ =size= - list section sizes and total size of binary files.
+
+#+begin_quote man page
+The GNU size utility lists the section sizes and the total size
+for each of the binary files objfile on its argument list.
+
+[[https://man7.org/linux/man-pages/man1/size.1.html]]
+#+end_quote
+
+** v 1.0.1
++ package: whatsit-git-a6e076c-1-x86_64.pkg.tar.zst
++ pkackage sha256: =654a8f685b0a3d39da5266062c339c4e7c00280de240a930517705663b4d5c86=
+
+
++ binary sha256: =6e651327bdaf74e54d46eefac4c80b561ea0fd6ad76f6a4c692b27a89848f51e=
+#+begin_example shell
+$ size whatsit_v1.0.1
+text    data     bss     dec     hex filename
+19025    1960       8   20993    5201 whatsit_v1.0.1
+
+$ stat -c '%s bytes' whatsit_v1.0.1
+35128 bytes
+#+end_example
+
+
+** v 2.0.0
++ package: whatsit-2.0.0.0.g7364201.d-1-x86_64.pkg.tar.zst
++ package sha256: =3941259779915423865721c50cf6cf103179f03cfd0428678cb22c52701e14ec=
+
++ binary sha256: =1186e766e7191d57ef91c408e7c076465048eb529e35c49b11c3ed8bf55b105b=
+#+begin_example shell
+$ size whatsit_v2.0.0
+text    data     bss     dec     hex filename
+101771    5192      16  106979   1a1e3 whatsit_v2.0.0
+
+$ stat -c '%s bytes' whatsit_v2.0.0
+117560 bytes
+#+end_example
