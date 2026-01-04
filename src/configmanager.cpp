@@ -34,11 +34,26 @@ void ConfigManager::load()
 
     loadBool("Window/MaximizedByDefault", false);
     loadBool("Window/RememberWindowSize", true);
+    
+    // Migration: MinimizeToTray moved from System to Window
+    QSettings settings(m_configPath, QSettings::IniFormat);
+    if (settings.contains("System/MinimizeToTray") && !settings.contains("Window/MinimizeToTray")) {
+        bool val = settings.value("System/MinimizeToTray", true).toBool();
+        settings.remove("System/MinimizeToTray");
+        settings.setValue("Window/MinimizeToTray", val);
+    }
+    loadBool("Window/MinimizeToTray", true);
 
     loadBool("System/AutostartOnLogin", false);
-    loadBool("System/MinimizeToTray", true);
     loadBool("System/StartMinimizedInTray", false);
     loadBool("System/SystemNotifications", true);
+    loadBool("System/MuteAudio", false);
+    
+    loadBool("Advanced/UseLessMemory", false);
+    
+    QSettings settings_adv(m_configPath, QSettings::IniFormat);
+    int memLimit = settings_adv.value("Advanced/MemoryLimit", 0).toInt();
+    m_memoryLimit = memLimit;
 
     loadBool("Debug/EnableFileLogging", false);
 
@@ -103,7 +118,7 @@ bool ConfigManager::autostartOnLogin() const
 
 bool ConfigManager::minimizeToTray() const
 {
-    return boolValue("System/MinimizeToTray");
+    return boolValue("Window/MinimizeToTray");
 }
 
 bool ConfigManager::startMinimizedInTray() const
@@ -114,6 +129,21 @@ bool ConfigManager::startMinimizedInTray() const
 bool ConfigManager::systemNotifications() const
 {
     return boolValue("System/SystemNotifications");
+}
+
+bool ConfigManager::muteAudio() const
+{
+    return boolValue("System/MuteAudio");
+}
+
+bool ConfigManager::useLessMemory() const
+{
+    return boolValue("Advanced/UseLessMemory");
+}
+
+int ConfigManager::memoryLimit() const
+{
+    return m_memoryLimit;
 }
 
 bool ConfigManager::debugLoggingEnabled() const
@@ -127,6 +157,44 @@ QString ConfigManager::downloadPath() const
     .value("Downloads/DownloadPath",
            QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
     .toString();
+}
+
+QString ConfigManager::customUrl() const
+{
+    QString customPath = m_configDir + "/custom.ini";
+    return QSettings(customPath, QSettings::IniFormat)
+        .value("Custom/Url", "").toString();
+}
+
+void ConfigManager::setCustomUrl(const QString &url)
+{
+    QString customPath = m_configDir + "/custom.ini";
+    QSettings settings(customPath, QSettings::IniFormat);
+    settings.setValue("Custom/Url", url);
+    settings.sync();
+}
+
+QString ConfigManager::customIcon() const
+{
+    QString customPath = m_configDir + "/custom.ini";
+    return QSettings(customPath, QSettings::IniFormat)
+        .value("Custom/Icon", "").toString();
+}
+
+void ConfigManager::setCustomIcon(const QString &icon)
+{
+    QString customPath = m_configDir + "/custom.ini";
+    QSettings settings(customPath, QSettings::IniFormat);
+    settings.setValue("Custom/Icon", icon);
+    settings.sync();
+}
+
+void ConfigManager::removeCustomConfig()
+{
+    QString customPath = m_configDir + "/custom.ini";
+    if (QFile::exists(customPath)) {
+        QFile::remove(customPath);
+    }
 }
 
 // ---------------- Setters ----------------
@@ -173,7 +241,7 @@ void ConfigManager::setAutostartOnLogin(bool v)
 
 void ConfigManager::setMinimizeToTray(bool v)
 {
-    setBoolValue("System/MinimizeToTray", v);
+    setBoolValue("Window/MinimizeToTray", v);
 }
 
 void ConfigManager::setStartMinimizedInTray(bool v)
@@ -184,6 +252,23 @@ void ConfigManager::setStartMinimizedInTray(bool v)
 void ConfigManager::setSystemNotifications(bool v)
 {
     setBoolValue("System/SystemNotifications", v);
+}
+
+void ConfigManager::setMuteAudio(bool v)
+{
+    setBoolValue("System/MuteAudio", v);
+}
+
+void ConfigManager::setUseLessMemory(bool v)
+{
+    setBoolValue("Advanced/UseLessMemory", v);
+}
+
+void ConfigManager::setMemoryLimit(int limit)
+{
+    m_memoryLimit = limit;
+    QSettings(m_configPath, QSettings::IniFormat)
+        .setValue("Advanced/MemoryLimit", limit);
 }
 
 void ConfigManager::setDebugLoggingEnabled(bool v)

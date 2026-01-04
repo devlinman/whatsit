@@ -18,6 +18,7 @@ public:
 
     void initialize();
     QWebEngineProfile *profile() const;
+    void setAudioMuted(bool muted);
 
 private slots:
     void handleDownloadRequested(QWebEngineDownloadRequest *download);

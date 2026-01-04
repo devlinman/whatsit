@@ -180,7 +180,7 @@ package() {
 + No support for multiple accounts/profiles.
 
 * Future updates
-- [ ] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
+- [X] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
 - [ ] Delete debug file on app/profile change.
 - [ ] Search app menu from titlebar.
 - [ ] Option to toggle injection of JavaScript.
@@ -188,6 +188,7 @@ package() {
 - [ ] Lower memory usage in Tray/startup.
 - [ ] Custom app icon with instant updates. =/usr/share/icons/hicolor/256x256/apps/whatsit_custom.png=
 - [ ] Give another url to open it as a webapp.
+- [X] Ctrl+Shift+q quits app completely.
 
 
 * License

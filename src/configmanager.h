@@ -28,12 +28,26 @@ public:
     bool minimizeToTray() const;
     bool startMinimizedInTray() const;
     bool systemNotifications() const;
+    bool muteAudio() const;
+
+    // --- Advanced ---
+    bool useLessMemory() const;
+    int memoryLimit() const;
 
     // Debug
     bool debugLoggingEnabled() const;
 
     // --- Downloads ---
     QString downloadPath() const;
+
+    // --- Custom ---
+    QString customUrl() const;
+    void setCustomUrl(const QString &url);
+
+    QString customIcon() const;
+    void setCustomIcon(const QString &icon);
+
+    void removeCustomConfig();
 
     // --- Setters ---
     void setPreferDarkMode(bool);
@@ -48,6 +62,11 @@ public:
     void setMinimizeToTray(bool);
     void setStartMinimizedInTray(bool);
     void setSystemNotifications(bool);
+    void setMuteAudio(bool);
+
+    // --- Advanced ---
+    void setUseLessMemory(bool);
+    void setMemoryLimit(int);
 
     // Debug
     void setDebugLoggingEnabled(bool);
@@ -59,6 +78,8 @@ public:
 private:
     QString m_configDir;
     QString m_configPath;
+
+    int m_memoryLimit = 0;
 
     // Centralized boolean storage
     QMap<QString, bool> m_boolValues;

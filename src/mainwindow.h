@@ -19,10 +19,16 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+
+private slots:
+    void checkMemoryUsage();
 
 private:
     void setupMenus();
     void handleExitRequest();
+    void updateMemoryState();
 
     // unified tray/window behavior
     void showAndRaise();
@@ -33,4 +39,5 @@ private:
     WebEngineHelper *web;
     TrayManager *tray;
     IpcManager *ipc;
+    QTimer *memoryTimer;
 };
