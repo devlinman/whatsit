@@ -1,13 +1,12 @@
 // configmanager.h
 #pragma once
 
-#include <QString>
-#include <QSize>
 #include <QMap>
+#include <QSize>
+#include <QString>
 
-class ConfigManager
-{
-public:
+class ConfigManager {
+  public:
     ConfigManager();
 
     void load();
@@ -28,12 +27,29 @@ public:
     bool minimizeToTray() const;
     bool startMinimizedInTray() const;
     bool systemNotifications() const;
+    bool muteAudio() const;
+
+    // --- Advanced ---
+    bool useLessMemory() const;
+    int memoryLimit() const;
 
     // Debug
     bool debugLoggingEnabled() const;
 
     // --- Downloads ---
     QString downloadPath() const;
+
+    // --- Custom ---
+    QString customUrl() const;
+    void setCustomUrl(const QString &url);
+
+    QString customTrayIcon() const;
+    void setCustomTrayIcon(const QString &icon);
+
+    QString customAppIcon() const;
+    void setCustomAppIcon(const QString &icon);
+
+    void removeCustomConfig();
 
     // --- Setters ---
     void setPreferDarkMode(bool);
@@ -48,6 +64,11 @@ public:
     void setMinimizeToTray(bool);
     void setStartMinimizedInTray(bool);
     void setSystemNotifications(bool);
+    void setMuteAudio(bool);
+
+    // --- Advanced ---
+    void setUseLessMemory(bool);
+    void setMemoryLimit(int);
 
     // Debug
     void setDebugLoggingEnabled(bool);
@@ -56,9 +77,11 @@ public:
 
     QString configDir() const;
 
-private:
+  private:
     QString m_configDir;
     QString m_configPath;
+
+    int m_memoryLimit = 0;
 
     // Centralized boolean storage
     QMap<QString, bool> m_boolValues;

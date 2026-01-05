@@ -130,9 +130,6 @@ void WebEngineHelper::initialize()
         }
 
         Logger::log("WebEngineHelper: New notification received.");
-        // Logger::log("  Title: " + notification->title());
-        // Logger::log("  Message: " + notification->message());
-        // Logger::log("  Tag: " + notification->tag());
 
         KNotification *knotify = new KNotification("whatsapp-message", KNotification::CloseOnTimeout);
         knotify->setComponentName("whatsit");
@@ -202,7 +199,16 @@ void WebEngineHelper::initialize()
         }
     });
 
+    setAudioMuted(m_config->muteAudio());
     applyTheme();
+}
+
+void WebEngineHelper::setAudioMuted(bool muted)
+{
+    Logger::log(QString("WebEngineHelper: Setting audio muted to %1").arg(muted));
+    if (m_view && m_view->page()) {
+        m_view->page()->setAudioMuted(muted);
+    }
 }
 
 void WebEngineHelper::applyTheme()

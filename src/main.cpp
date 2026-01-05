@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     flags.remove("--blink-settings=preferredColorScheme=1");
     flags.remove("--blink-settings=preferredColorScheme=2");
     
-    // Cleanup any double spaces created by removal
     flags = flags.simplified(); 
 
     if (config.preferDarkMode()) {

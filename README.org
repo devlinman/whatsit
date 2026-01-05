@@ -34,33 +34,19 @@
 + Very low overhead compared to Electron apps
 
 
-* Improvements in v 2.0.0
+* Improvements in v 3.0.0
 ** Title bar menu:
-*** General
-+ Better dark mode toggle.
-+ Remember Downloads path.
-
-*** View
-+ Zoom controls.
-
-*** Window
-+ Minimize to Tray on Close
-
 *** System
-+ Autostart on login.
-+ Start minimized in tray.
-+ Notifications for new messages when app is out of focus or hidden.
++ Mute sounds (including notifications and media)
 
 *** Advanced
-+ Debugging to log file.
-+ Reload cache and config.
-+ Remove profile and restart.
++ Use Less Memory
++ Memory Kill switch
++ Customize App
 
 ** Others
-+ Single instance behaviour.
 + Tray icon toggles show/hide window on click.
-+ =Ctrl+q= keybinding quits/closes the app.
-+ Hyperlinks open in external browser.
++ =Ctrl+Shift+Q= keybinding quits the app completely.
 
 
 * Paths and Storage Locations
@@ -180,14 +166,16 @@ package() {
 + No support for multiple accounts/profiles.
 
 * Future updates
-- [ ] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
+- [X] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
 - [ ] Delete debug file on app/profile change.
 - [ ] Search app menu from titlebar.
 - [ ] Option to toggle injection of JavaScript.
-- [ ] Memory kill switch option.
-- [ ] Lower memory usage in Tray/startup.
-- [ ] Custom app icon with instant updates. =/usr/share/icons/hicolor/256x256/apps/whatsit_custom.png=
-- [ ] Give another url to open it as a webapp.
+- [X] Memory kill switch option.
+- [X] Lower memory usage in Tray/startup.
+- [X] Custom app icon with instant updates. =/usr/share/icons/hicolor/256x256/apps/whatsit_custom.png=
+- [X] Give another url to open it as a webapp.
+- [X] Ctrl+Shift+q quits app completely.
+- [ ] Icons for menu actions
 
 
 * License

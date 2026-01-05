@@ -5,24 +5,31 @@
 #include <QWebEngineView>
 
 #include "configmanager.h"
-#include "webenginehelper.h"
-#include "traymanager.h"
 #include "ipcmanager.h"
+#include "traymanager.h"
+#include "webenginehelper.h"
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
-public:
+  public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
-protected:
+  protected:
     void closeEvent(QCloseEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
-private:
+  private slots:
+    void checkMemoryUsage();
+
+  private:
     void setupMenus();
+    void ensureDesktopFile(const QString &iconPath);
+    void rebuildKCache();
     void handleExitRequest();
+    void updateMemoryState();
 
     // unified tray/window behavior
     void showAndRaise();
@@ -33,4 +40,5 @@ private:
     WebEngineHelper *web;
     TrayManager *tray;
     IpcManager *ipc;
+    QTimer *memoryTimer;
 };

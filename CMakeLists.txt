@@ -80,9 +80,7 @@ target_link_libraries(whatsit PRIVATE
     KF6::StatusNotifierItem
     KF6::WidgetsAddons
     KF6::IconThemes
-
-    # Required on Arch: no exported CMake target
-    KF6IconWidgets
+    KF6::IconWidgets
 )
 
 # -----------------------------
@@ -108,6 +106,14 @@ install(
 
 
 install(FILES resources/whatsit.png
+    DESTINATION share/icons/hicolor/256x256/apps
+)
+
+install(FILES resources/whatsit_mono.png
+    DESTINATION share/icons/hicolor/256x256/apps
+)
+
+install(FILES resources/WhatsApp.png
     DESTINATION share/icons/hicolor/256x256/apps
 )
 

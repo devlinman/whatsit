@@ -15,7 +15,6 @@ void Logger::log(const QString &message)
     QString timestamp = QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss");
     QString logMsg = QString("[%1] %2").arg(timestamp, message);
 
-    // Always print to stdout
     std::cout << logMsg.toStdString() << std::endl;
 
     if (s_fileLoggingEnabled) {

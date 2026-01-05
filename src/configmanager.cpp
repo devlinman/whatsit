@@ -2,21 +2,20 @@
 #include "configmanager.h"
 #include "logger.h"
 
-#include <QSettings>
-#include <QStandardPaths>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QTextStream>
-#include <QCoreApplication>
 #include <cmath>
 
 // ---------------- Constructor ----------------
 
-ConfigManager::ConfigManager()
-{
+ConfigManager::ConfigManager() {
     m_configDir =
-    QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
-    + "/whatsit";
+        QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) +
+        "/whatsit";
 
     QDir().mkpath(m_configDir);
 
@@ -25,8 +24,7 @@ ConfigManager::ConfigManager()
 
 // ---------------- Lifecycle ----------------
 
-void ConfigManager::load()
-{
+void ConfigManager::load() {
     Logger::log("Loading configuration...");
     // --- Boolean schema ---
     loadBool("General/PreferDarkMode", false);
@@ -35,10 +33,26 @@ void ConfigManager::load()
     loadBool("Window/MaximizedByDefault", false);
     loadBool("Window/RememberWindowSize", true);
 
+    // Migration: MinimizeToTray moved from System to Window
+    QSettings settings(m_configPath, QSettings::IniFormat);
+    if (settings.contains("System/MinimizeToTray") &&
+        !settings.contains("Window/MinimizeToTray")) {
+        bool val = settings.value("System/MinimizeToTray", true).toBool();
+        settings.remove("System/MinimizeToTray");
+        settings.setValue("Window/MinimizeToTray", val);
+    }
+    loadBool("Window/MinimizeToTray", true);
+
     loadBool("System/AutostartOnLogin", false);
-    loadBool("System/MinimizeToTray", true);
     loadBool("System/StartMinimizedInTray", false);
     loadBool("System/SystemNotifications", true);
+    loadBool("System/MuteAudio", false);
+
+    loadBool("Advanced/UseLessMemory", false);
+
+    QSettings settings_adv(m_configPath, QSettings::IniFormat);
+    int memLimit = settings_adv.value("Advanced/MemoryLimit", 0).toInt();
+    m_memoryLimit = memLimit;
 
     loadBool("Debug/EnableFileLogging", false);
 
@@ -48,12 +62,12 @@ void ConfigManager::load()
     sync();
 }
 
-void ConfigManager::sync()
-{
+void ConfigManager::sync() {
     Logger::log("Syncing configuration to disk: " + m_configPath);
     QSettings settings(m_configPath, QSettings::IniFormat);
 
-    for (auto it = m_boolValues.constBegin(); it != m_boolValues.constEnd(); ++it) {
+    for (auto it = m_boolValues.constBegin(); it != m_boolValues.constEnd();
+         ++it) {
         settings.setValue(it.key(), it.value());
     }
 
@@ -62,152 +76,193 @@ void ConfigManager::sync()
 
 // ---------------- Getters ----------------
 
-bool ConfigManager::preferDarkMode() const
-{
+bool ConfigManager::preferDarkMode() const {
     return boolValue("General/PreferDarkMode");
 }
 
-bool ConfigManager::rememberDownloadPaths() const
-{
+bool ConfigManager::rememberDownloadPaths() const {
     return boolValue("General/RememberDownloadPaths");
 }
 
-bool ConfigManager::maximizedByDefault() const
-{
+bool ConfigManager::maximizedByDefault() const {
     return boolValue("Window/MaximizedByDefault");
 }
 
-bool ConfigManager::rememberWindowSize() const
-{
+bool ConfigManager::rememberWindowSize() const {
     return boolValue("Window/RememberWindowSize");
 }
 
-QSize ConfigManager::windowSize() const
-{
+QSize ConfigManager::windowSize() const {
     return QSettings(m_configPath, QSettings::IniFormat)
-    .value("Window/Size", QSize(900, 600))
-    .toSize();
+        .value("Window/Size", QSize(900, 600))
+        .toSize();
 }
 
-double ConfigManager::zoomLevel() const
-{
+double ConfigManager::zoomLevel() const {
     return QSettings(m_configPath, QSettings::IniFormat)
-    .value("Window/ZoomLevel", 1.0)
-    .toDouble();
+        .value("Window/ZoomLevel", 1.0)
+        .toDouble();
 }
 
-bool ConfigManager::autostartOnLogin() const
-{
+bool ConfigManager::autostartOnLogin() const {
     return boolValue("System/AutostartOnLogin");
 }
 
-bool ConfigManager::minimizeToTray() const
-{
-    return boolValue("System/MinimizeToTray");
+bool ConfigManager::minimizeToTray() const {
+    return boolValue("Window/MinimizeToTray");
 }
 
-bool ConfigManager::startMinimizedInTray() const
-{
+bool ConfigManager::startMinimizedInTray() const {
     return boolValue("System/StartMinimizedInTray");
 }
 
-bool ConfigManager::systemNotifications() const
-{
+bool ConfigManager::systemNotifications() const {
     return boolValue("System/SystemNotifications");
 }
 
-bool ConfigManager::debugLoggingEnabled() const
-{
+bool ConfigManager::muteAudio() const { return boolValue("System/MuteAudio"); }
+
+bool ConfigManager::useLessMemory() const {
+    return boolValue("Advanced/UseLessMemory");
+}
+
+int ConfigManager::memoryLimit() const { return m_memoryLimit; }
+
+bool ConfigManager::debugLoggingEnabled() const {
     return boolValue("Debug/EnableFileLogging");
 }
 
-QString ConfigManager::downloadPath() const
-{
+QString ConfigManager::downloadPath() const {
     return QSettings(m_configPath, QSettings::IniFormat)
-    .value("Downloads/DownloadPath",
-           QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
-    .toString();
+        .value("Downloads/DownloadPath", QStandardPaths::writableLocation(
+                                             QStandardPaths::DownloadLocation))
+        .toString();
+}
+
+QString ConfigManager::customUrl() const {
+    QString customPath = m_configDir + "/custom.ini";
+    return QSettings(customPath, QSettings::IniFormat)
+        .value("Custom/Url", "")
+        .toString();
+}
+
+void ConfigManager::setCustomUrl(const QString &url) {
+    QString customPath = m_configDir + "/custom.ini";
+    QSettings settings(customPath, QSettings::IniFormat);
+    settings.setValue("Custom/Url", url);
+    settings.sync();
+}
+
+QString ConfigManager::customTrayIcon() const {
+    QString customPath = m_configDir + "/custom.ini";
+    return QSettings(customPath, QSettings::IniFormat)
+        .value("Custom/TrayIcon", "")
+        .toString();
+}
+
+QString ConfigManager::customAppIcon() const {
+    QString customPath = m_configDir + "/custom.ini";
+    return QSettings(customPath, QSettings::IniFormat)
+        .value("Custom/AppIcon", "")
+        .toString();
+}
+
+void ConfigManager::setCustomTrayIcon(const QString &icon) {
+    QString customPath = m_configDir + "/custom.ini";
+    QSettings settings(customPath, QSettings::IniFormat);
+    settings.setValue("Custom/TrayIcon", icon);
+    settings.sync();
+}
+void ConfigManager::setCustomAppIcon(const QString &icon) {
+    QString customPath = m_configDir + "/custom.ini";
+    QSettings settings(customPath, QSettings::IniFormat);
+    settings.setValue("Custom/AppIcon", icon);
+    settings.sync();
+}
+
+void ConfigManager::removeCustomConfig() {
+    QString customPath = m_configDir + "/custom.ini";
+    if (QFile::exists(customPath)) {
+        QFile::remove(customPath);
+    }
 }
 
 // ---------------- Setters ----------------
 
-void ConfigManager::setPreferDarkMode(bool v)
-{
+void ConfigManager::setPreferDarkMode(bool v) {
     setBoolValue("General/PreferDarkMode", v);
 }
 
-void ConfigManager::setRememberDownloadPaths(bool v)
-{
+void ConfigManager::setRememberDownloadPaths(bool v) {
     setBoolValue("General/RememberDownloadPaths", v);
 }
 
-void ConfigManager::setMaximizedByDefault(bool v)
-{
+void ConfigManager::setMaximizedByDefault(bool v) {
     setBoolValue("Window/MaximizedByDefault", v);
 }
 
-void ConfigManager::setRememberWindowSize(bool v)
-{
+void ConfigManager::setRememberWindowSize(bool v) {
     setBoolValue("Window/RememberWindowSize", v);
 }
 
-void ConfigManager::setWindowSize(const QSize &size)
-{
-    QSettings(m_configPath, QSettings::IniFormat)
-    .setValue("Window/Size", size);
+void ConfigManager::setWindowSize(const QSize &size) {
+    QSettings(m_configPath, QSettings::IniFormat).setValue("Window/Size", size);
 }
 
-void ConfigManager::setZoomLevel(double level)
-{
+void ConfigManager::setZoomLevel(double level) {
     // Ensure we store a clean 1-decimal value
     double rounded = std::round(level * 10.0) / 10.0;
     QSettings(m_configPath, QSettings::IniFormat)
-    .setValue("Window/ZoomLevel", rounded);
+        .setValue("Window/ZoomLevel", rounded);
 }
 
-void ConfigManager::setAutostartOnLogin(bool v)
-{
+void ConfigManager::setAutostartOnLogin(bool v) {
     setBoolValue("System/AutostartOnLogin", v);
     applyAutostart(v);
 }
 
-void ConfigManager::setMinimizeToTray(bool v)
-{
-    setBoolValue("System/MinimizeToTray", v);
+void ConfigManager::setMinimizeToTray(bool v) {
+    setBoolValue("Window/MinimizeToTray", v);
 }
 
-void ConfigManager::setStartMinimizedInTray(bool v)
-{
+void ConfigManager::setStartMinimizedInTray(bool v) {
     setBoolValue("System/StartMinimizedInTray", v);
 }
 
-void ConfigManager::setSystemNotifications(bool v)
-{
+void ConfigManager::setSystemNotifications(bool v) {
     setBoolValue("System/SystemNotifications", v);
 }
 
-void ConfigManager::setDebugLoggingEnabled(bool v)
-{
+void ConfigManager::setMuteAudio(bool v) {
+    setBoolValue("System/MuteAudio", v);
+}
+
+void ConfigManager::setUseLessMemory(bool v) {
+    setBoolValue("Advanced/UseLessMemory", v);
+}
+
+void ConfigManager::setMemoryLimit(int limit) {
+    m_memoryLimit = limit;
+    QSettings(m_configPath, QSettings::IniFormat)
+        .setValue("Advanced/MemoryLimit", limit);
+}
+
+void ConfigManager::setDebugLoggingEnabled(bool v) {
     setBoolValue("Debug/EnableFileLogging", v);
 }
 
-void ConfigManager::setDownloadPath(const QString &path)
-{
+void ConfigManager::setDownloadPath(const QString &path) {
     QSettings(m_configPath, QSettings::IniFormat)
-    .setValue("Downloads/DownloadPath", path);
+        .setValue("Downloads/DownloadPath", path);
 }
 
 // ---------------- Paths ----------------
 
-QString ConfigManager::configDir() const
-{
-    return m_configDir;
-}
+QString ConfigManager::configDir() const { return m_configDir; }
 
 // ---------------- Internal helpers ----------------
 
-void ConfigManager::loadBool(const QString &key, bool defaultValue)
-{
+void ConfigManager::loadBool(const QString &key, bool defaultValue) {
     QSettings settings(m_configPath, QSettings::IniFormat);
 
     bool value = settings.value(key, defaultValue).toBool();
@@ -215,27 +270,25 @@ void ConfigManager::loadBool(const QString &key, bool defaultValue)
     settings.setValue(key, value);
 }
 
-bool ConfigManager::boolValue(const QString &key) const
-{
+bool ConfigManager::boolValue(const QString &key) const {
     return m_boolValues.value(key, false);
 }
 
-void ConfigManager::setBoolValue(const QString &key, bool value)
-{
+void ConfigManager::setBoolValue(const QString &key, bool value) {
     m_boolValues[key] = value;
 
     QSettings settings(m_configPath, QSettings::IniFormat);
     settings.setValue(key, value);
 }
 
-// ---------------- Autostart (SAFE) ----------------
+// ---------------- Autostart ----------------
 
-void ConfigManager::applyAutostart(bool enabled)
-{
-    Logger::log(QString("Applying autostart: %1").arg(enabled ? "ENABLED" : "DISABLED"));
+void ConfigManager::applyAutostart(bool enabled) {
+    Logger::log(QString("Applying autostart: %1")
+                    .arg(enabled ? "ENABLED" : "DISABLED"));
     const QString autostartDir =
-    QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
-    + "/autostart";
+        QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) +
+        "/autostart";
 
     const QString desktopFile = autostartDir + "/whatsit.desktop";
 
