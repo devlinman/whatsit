@@ -23,6 +23,7 @@ find_package(Qt6 6.2 REQUIRED COMPONENTS
     Widgets
     WebEngineWidgets
     WebEngineCore
+    DBus
 )
 
 # -----------------------------
@@ -32,7 +33,6 @@ find_package(ECM REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 find_package(KF6Config REQUIRED)
-find_package(KF6Notifications REQUIRED)
 find_package(KF6StatusNotifierItem REQUIRED)
 find_package(KF6WidgetsAddons REQUIRED)
 find_package(KF6IconThemes REQUIRED)
@@ -74,9 +74,9 @@ target_link_libraries(whatsit PRIVATE
     Qt6::Widgets
     Qt6::WebEngineWidgets
     Qt6::WebEngineCore
+    Qt6::DBus
 
     KF6::ConfigCore
-    KF6::Notifications
     KF6::StatusNotifierItem
     KF6::WidgetsAddons
     KF6::IconThemes
@@ -98,12 +98,6 @@ install(
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE
 )
-
-install(
-    FILES data/whatsit.notifyrc
-    DESTINATION share/knotifications6
-)
-
 
 install(FILES resources/whatsit.png
     DESTINATION share/icons/hicolor/256x256/apps

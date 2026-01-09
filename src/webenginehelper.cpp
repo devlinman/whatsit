@@ -7,7 +7,6 @@
 #include <QWebEngineProfile>
 #include <QWebEnginePermission>
 #include <QWebEngineNotification>
-#include <KNotification>
 #include <QWebEngineScript>
 #include <QWebEngineScriptCollection>
 #include <QWebEngineDownloadRequest>
@@ -19,6 +18,14 @@
 #include <QFileInfo>
 #include <QJsonObject>
 #include <QJsonDocument>
+
+// DBus includes
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusReply>
+#include <QDBusArgument>
+#include <QDBusMetaType>
+#include <QImage>
 
 namespace {
 
@@ -82,8 +89,38 @@ namespace {
                                          }
         };
     };
+    
+    // Helper to marshal image data for DBus
+    struct DBusImageStruct {
+        int width;
+        int height;
+        int rowStride;
+        bool hasAlpha;
+        int bitsPerSample;
+        int channels;
+        QByteArray data;
+    };
+    
+    QDBusArgument &operator<<(QDBusArgument &argument, const DBusImageStruct &icon) {
+        argument.beginStructure();
+        argument << icon.width << icon.height << icon.rowStride << icon.hasAlpha
+                 << icon.bitsPerSample << icon.channels << icon.data;
+        argument.endStructure();
+        return argument;
+    }
+    
+    const QDBusArgument &operator>>(const QDBusArgument &argument, DBusImageStruct &icon) {
+        argument.beginStructure();
+        argument >> icon.width >> icon.height >> icon.rowStride >> icon.hasAlpha
+                 >> icon.bitsPerSample >> icon.channels >> icon.data;
+        argument.endStructure();
+        return argument;
+    }
 
 } // namespace
+
+// Register the custom type
+Q_DECLARE_METATYPE(DBusImageStruct)
 
 WebEngineHelper::WebEngineHelper(QWebEngineView *view,
                                  ConfigManager *config,
@@ -93,6 +130,7 @@ m_view(view),
 m_profile(nullptr),
 m_config(config)
 {
+    qDBusRegisterMetaType<DBusImageStruct>();
 }
 
 void WebEngineHelper::initialize()
@@ -122,6 +160,25 @@ void WebEngineHelper::initialize()
     connect(m_profile, &QWebEngineProfile::downloadRequested,
             this, &WebEngineHelper::handleDownloadRequested);
 
+    // Setup DBus signal listeners
+    QDBusConnection::sessionBus().connect(
+        QString(), 
+        "/org/freedesktop/Notifications",
+        "org.freedesktop.Notifications",
+        "ActionInvoked",
+        this,
+        SLOT(onNotificationActionInvoked(uint, QString))
+    );
+    
+    QDBusConnection::sessionBus().connect(
+        QString(), 
+        "/org/freedesktop/Notifications",
+        "org.freedesktop.Notifications",
+        "NotificationClosed",
+        this,
+        SLOT(onNotificationClosed(uint, uint))
+    );
+
     // Notification Presenter
     m_profile->setNotificationPresenter([this](std::unique_ptr<QWebEngineNotification> notification) {
         if (!m_config->systemNotifications()) {
@@ -129,58 +186,88 @@ void WebEngineHelper::initialize()
             return;
         }
 
-        Logger::log("WebEngineHelper: New notification received.");
-
-        KNotification *knotify = new KNotification("whatsapp-message", KNotification::CloseOnTimeout);
-        knotify->setComponentName("whatsit");
-        knotify->setHint("desktop-entry", "whatsit");
-        knotify->setTitle(notification->title());
-        
-        QString message = notification->message();
-        if (message.isEmpty()) {
-            message = "New Message";
-            Logger::log("  Message was empty, using fallback.");
-        }
-        knotify->setText(message);
-        knotify->setIconName("whatsit");
-
-        QImage icon = notification->icon();
-        if (!icon.isNull()) {
-            Logger::log("  Icon: Valid (" + QString::number(icon.width()) + "x" + QString::number(icon.height()) + ")");
-            knotify->setPixmap(QPixmap::fromImage(icon));
-        } else {
-            Logger::log("  Icon: Null/Empty");
-        }
+        Logger::log("WebEngineHelper: New notification received (DBus).");
 
         QWebEngineNotification *rawNotif = notification.release();
-        rawNotif->setParent(knotify);
-
-        auto *defaultAction = knotify->addDefaultAction(QString());
         
-        // Handle click: Activate window AND tell WebEngine
-        QObject::connect(defaultAction, &KNotificationAction::activated, rawNotif, [this, rawNotif]() {
-            Logger::log("WebEngineHelper: Notification clicked. Activating window.");
-            if (m_view && m_view->window()) {
-                QWidget *win = m_view->window();
-                if (win->isMinimized()) {
-                    win->showNormal();
-                } else {
-                    win->show();
+        // Prepare DBus arguments
+        QString appName = "whatsit";
+        uint replacesId = 0; // Always new
+        QString appIcon = "whatsit";
+        QString summary = rawNotif->title();
+        QString body = rawNotif->message();
+        if (body.isEmpty()) {
+            body = "New Message";
+        }
+        
+        QStringList actions;
+        actions << "default" << "Open";
+        
+        QVariantMap hints;
+        hints["desktop-entry"] = "whatsit";
+        hints["category"] = "im.received";
+        
+        // Process Icon
+        QImage icon = rawNotif->icon();
+        if (!icon.isNull()) {
+             QImage converted = icon.convertToFormat(QImage::Format_RGBA8888);
+             DBusImageStruct dbusIcon;
+             dbusIcon.width = converted.width();
+             dbusIcon.height = converted.height();
+             dbusIcon.rowStride = converted.bytesPerLine();
+             dbusIcon.hasAlpha = true;
+             dbusIcon.bitsPerSample = 8;
+             dbusIcon.channels = 4;
+             dbusIcon.data = QByteArray((const char*)converted.constBits(), converted.sizeInBytes());
+             
+             hints["image-data"] = QVariant::fromValue(dbusIcon);
+        }
+        
+        int timeout = -1; // Server default
+
+        QDBusMessage msg = QDBusMessage::createMethodCall(
+            "org.freedesktop.Notifications",
+            "/org/freedesktop/Notifications",
+            "org.freedesktop.Notifications",
+            "Notify"
+        );
+        
+        msg << appName << replacesId << appIcon << summary << body << actions << hints << timeout;
+
+        QDBusReply<uint> reply = QDBusConnection::sessionBus().call(msg);
+        
+        if (reply.isValid()) {
+            uint id = reply.value();
+            m_activeNotifications.insert(id, rawNotif);
+            
+            // Clean up if the web engine closes it from its side
+            connect(rawNotif, &QWebEngineNotification::closed, this, [this, id]() {
+                // If web engine closes it, we ideally should close the system notification too.
+                // But Notify doesn't have a simple Close method exposed without another DBus call.
+                // For now, just remove from map.
+                if (m_activeNotifications.contains(id)) {
+                     QDBusMessage closeMsg = QDBusMessage::createMethodCall(
+                        "org.freedesktop.Notifications",
+                        "/org/freedesktop/Notifications",
+                        "org.freedesktop.Notifications",
+                        "CloseNotification"
+                    );
+                    closeMsg << id;
+                    QDBusConnection::sessionBus().call(closeMsg);
+                    
+                    m_activeNotifications.remove(id);
                 }
-                win->raise();
-                win->activateWindow();
-            }
-            rawNotif->click();
-        });
+            });
+            
+             // Ensure rawNotif is deleted eventually
+             connect(rawNotif, &QWebEngineNotification::closed, rawNotif, &QObject::deleteLater);
 
-        QObject::connect(knotify, &KNotification::closed, rawNotif, &QWebEngineNotification::close);
-        QObject::connect(rawNotif, &QWebEngineNotification::closed, knotify, &KNotification::close);
-        QObject::connect(knotify, &KNotification::closed, knotify, &QObject::deleteLater);
-
-        Logger::log("WebEngineHelper: Calling notification->show() and sending KNotification event...");
-        rawNotif->show();
-        knotify->sendEvent();
-        Logger::log("WebEngineHelper: Notification displayed.");
+            Logger::log(QString("WebEngineHelper: Notification sent via DBus. ID: %1").arg(id));
+            rawNotif->show(); // Inform WebEngine it is shown
+        } else {
+             Logger::log("WebEngineHelper: DBus Error: " + reply.error().message());
+             rawNotif->deleteLater();
+        }
     });
 
     auto *page = new WhatsitPage(m_profile, m_view);
@@ -201,6 +288,41 @@ void WebEngineHelper::initialize()
 
     setAudioMuted(m_config->muteAudio());
     applyTheme();
+}
+
+void WebEngineHelper::onNotificationActionInvoked(uint id, const QString &actionKey)
+{
+    Logger::log(QString("WebEngineHelper: Action invoked for ID %1, key: %2").arg(id).arg(actionKey));
+    if (m_activeNotifications.contains(id)) {
+        if (actionKey == "default") {
+            Logger::log("WebEngineHelper: Default action. Activating window.");
+            if (m_view && m_view->window()) {
+                QWidget *win = m_view->window();
+                if (win->isMinimized()) {
+                    win->showNormal();
+                } else {
+                    win->show();
+                }
+                win->raise();
+                win->activateWindow();
+            }
+            
+            QWebEngineNotification *notif = m_activeNotifications[id];
+            if (notif) notif->click();
+        }
+    }
+}
+
+void WebEngineHelper::onNotificationClosed(uint id, uint reason)
+{
+     Logger::log(QString("WebEngineHelper: Notification Closed ID %1, Reason: %2").arg(id).arg(reason));
+     if (m_activeNotifications.contains(id)) {
+         QWebEngineNotification *notif = m_activeNotifications.take(id);
+         if (notif) {
+             notif->close();
+             // deleteLater is already connected in creation
+         }
+     }
 }
 
 void WebEngineHelper::setAudioMuted(bool muted)
