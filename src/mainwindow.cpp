@@ -137,20 +137,16 @@ MainWindow::MainWindow(QWidget *parent)
     setupMenus();
 
     // URL Logic
-    QString targetUrlStr = config.customUrl();
-    if (targetUrlStr.isEmpty()) {
-        targetUrlStr = "https://web.whatsapp.com";
-    }
+    QUrl targetUrl = getTargetUrl();
 
-    QUrl targetUrl(targetUrlStr);
-    if (!targetUrl.isValid() || targetUrl.scheme().isEmpty()) {
-        Logger::log("Invalid Custom URL: " + targetUrlStr +
-                    " -> Fallback to Google.");
-        targetUrl = QUrl("https://google.com");
+    if (config.useLessMemory() && config.startMinimizedInTray()) {
+        Logger::log("Low-memory startup: Delaying load of " +
+                    targetUrl.toString());
+        view->setUrl(QUrl("about:blank"));
+    } else {
+        Logger::log("Loading URL: " + targetUrl.toString());
+        view->load(targetUrl);
     }
-
-    Logger::log("Loading URL: " + targetUrl.toString());
-    view->load(targetUrl);
 }
 
 MainWindow::~MainWindow() {
@@ -219,12 +215,24 @@ void MainWindow::updateMemoryState() {
         // page
         if (view->url().toString() == "about:blank") {
             Logger::log("Use Less Memory: Restoring content");
-            QString target = config.customUrl();
-            if (target.isEmpty())
-                target = "https://web.whatsapp.com";
-            view->setUrl(QUrl(target));
+            view->setUrl(getTargetUrl());
         }
     }
+}
+
+QUrl MainWindow::getTargetUrl() const {
+    QString targetUrlStr = config.customUrl();
+    if (targetUrlStr.isEmpty()) {
+        targetUrlStr = "https://web.whatsapp.com";
+    }
+
+    QUrl targetUrl(targetUrlStr);
+    if (!targetUrl.isValid() || targetUrl.scheme().isEmpty()) {
+        Logger::log("Invalid Custom URL: " + targetUrlStr +
+                    " -> Fallback to Google.");
+        targetUrl = QUrl("https://google.com");
+    }
+    return targetUrl;
 }
 
 void MainWindow::checkMemoryUsage() {
@@ -456,6 +464,7 @@ void MainWindow::setupMenus() {
     connect(memKill, &QAction::triggered, [this] {
         QDialog dlg(this);
         dlg.setWindowTitle("Memory Kill Switch");
+        dlg.setMinimumSize(400, 200);
         auto *layout = new QVBoxLayout(&dlg);
 
         auto *label = new QLabel("Threshold (1GB - 4GB):", &dlg);
@@ -575,7 +584,7 @@ void MainWindow::setupMenus() {
                 trayIconBtn->setIcon(tempIcon);
             }
         });
-        
+
         connect(appIconBtn, &QPushButton::clicked, [&] {
             QString icon = KIconDialog::getIcon(
                 KIconLoader::Desktop, KIconLoader::Application, false, 0, false,

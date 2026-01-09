@@ -30,6 +30,7 @@ class MainWindow : public QMainWindow {
     void rebuildKCache();
     void handleExitRequest();
     void updateMemoryState();
+    QUrl getTargetUrl() const;
 
     // unified tray/window behavior
     void showAndRaise();

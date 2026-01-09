@@ -1,30 +1,39 @@
 #+TITLE: Mr. Whatsit
 #+DESCRIPTION: Name Inspired by the series Stranger Things S5
 #+AUTHOR: devlinman
-#+OPTIONS: toc:nil num:nil
 
-* Whatsit
+* Contents :TOC_1:
+- [[#about-whatsit][About Whatsit]]
+- [[#improvements-in-v-30x][Improvements in v 3.0.x]]
+- [[#paths-and-storage-locations][Paths and Storage Locations]]
+- [[#configuration][Configuration]]
+- [[#install-from-aur][Install from AUR]]
+- [[#build][Build]]
+- [[#notes][Notes]]
+- [[#future-updates][Future updates]]
+- [[#license][License]]
+
+* About Whatsit
 
 + A lightweight, native desktop client for WhatsApp Web built with Qt 6 and Qt WebEngine.
 
-+ Whatsit is *not* Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
++ Whatsit is *NOT* Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
 
 + Name Inspired by the series /Stranger Things S5/.
 
-+ I have tried many Whatsapp web clients, but none of them are fast and light.
-+ +I don't need a system tray... I don't need notifications...+
++ I have tried many Whatsapp web clients, but none of them are fast and light. None of them felt right...
 
-+ Turns out, I do need a system tray icon, and notifications. So they are implemented in =v2.0.0=.
++ My setup is Arch-KDE Plasma-Wayland. If your setup is similar, the app should work well.
+
++ In =v3.0.x=, additional features such as memory kill switch and custom app and tray icons, etc.
+  You may call these features bloat, but I like to have those. If you don't want those, use lower versions of the app.
+
++ +I don't need a system tray... I don't need notifications...+
+  Turns out, I do need a system tray icon, and notifications. So they are implemented in =v2.0.0=.
 
 + If you want the minimal and bare version, use =v1.0.1=.
 
-** Philosophy
-*** Whatsit is designed to be:
-+ Fast, Native, Maintainable.
-+ It delegates all heavy lifting to Qt WebEngine.
-+ Some JavaScript is injected to make dark mode and notifications work.
 ** Features
-
 + Native Qt 6 application
 + Qt WebEngine-based (Chromium)
 + Persistent login and chat storage
@@ -32,17 +41,19 @@
 + KDE / Wayland friendly
 + Dark mode support via configuration
 + Very low overhead compared to Electron apps
++ KDE Native Notification support
++ Reduce memory usage & kill switch
 
 
-* Improvements in v 3.0.0
+* Improvements in v 3.0.x
 ** Title bar menu:
 *** System
 + Mute sounds (including notifications and media)
 
 *** Advanced
-+ Use Less Memory
-+ Memory Kill switch
-+ Customize App
++ Use Less Memory - When hidden to tray, app consumes less memory by unloading the webpage.
++ Memory Kill switch - Checks its memory every 30 seconds and quits if memory usage is above the threshold.
++ Customize App Icon, Tray Icon and App URL.
 
 ** Others
 + Tray icon toggles show/hide window on click.
@@ -56,7 +67,8 @@
 + desktop file at =/usr/share/applications/whatsit.desktop=
 + notifyrc at =/usr/share/knotifications6/whatsit.notifyrc=
 + binary at =/usr/bin/whatsit=
-+ config file at =~/.config/whatsit/whatsit.ini=
++ main config file at =~/.config/whatsit/whatsit.ini=
++ customization config file at =~/.config/whatsit/custom.ini=
 
 ** Folders:
 + cache at =~/.cache/whatsit/whatsit=
@@ -65,12 +77,16 @@
 
 * Configuration
 
-+ Config file located at =~/.config/whatsit/whatsit.conf=.
++ Main config file located at =~/.config/whatsit/whatsit.ini=.
 + It is generated automatically on first run.
 
 + Example config:
 
 #+begin_src ini
+[Advanced]
+MemoryLimit=2
+UseLessMemory=true
+
 [Debug]
 EnableFileLogging=false
 
@@ -79,20 +95,40 @@ PreferDarkMode=true
 RememberDownloadPaths=true
 
 [System]
-AutostartOnLogin=false
-MinimizeToTray=true
+AutostartOnLogin=true
+MuteAudio=true
 StartMinimizedInTray=true
 SystemNotifications=true
 
 [Window]
 MaximizedByDefault=true
+MinimizeToTray=true
 RememberWindowSize=true
 Size=@Size(1920 1046)
-ZoomLevel=1.4
+ZoomLevel=1.3
 #+end_src
 
-* Requirements
++ If you customize tray icon or app icon, or app url, you will find them at =~/.config/whatsit/custom.ini=.
++ If any of the keys are left empty, the app will use fallback values.
+#+begin_src ini
+[Custom]
+AppIcon=WhatsApp
+TrayIcon=whatsit_mono
+Url=
+#+end_src
 
+* Install from AUR
++ Now available from AUR - =whatsit-git=
++ Builds from latest commit from git on default branch (master).
+
+#+begin_src shell
+yay -S whatsit-git
+#+end_src
+
+
+* Build
+
+** Requirements
 + Linux
 + Qt >= 6.2
 + qt6-base
@@ -100,9 +136,7 @@ ZoomLevel=1.4
 + CMake
 + C++17 compatible compiler
 
-* Build
-
-*** Build from Source
+** Build from Source
 #+begin_src shell
 # git clone and cd first.
 # Make sure you are in the repository root.
@@ -121,7 +155,8 @@ sudo make install
 + If you installed the package using pacman, remove with:
   =sudo pacman -R whatsit=
 
-*** PKGBUILD
+
+** PKGBUILD
 + To build using the PKGBUILD file given below, download it, and run:
     =makepkg -si=
 + This PKGBUILD builds from latest commit on github (on master branch).
@@ -153,9 +188,11 @@ package() {
 
 
 * Notes
++ *Some JavaScript is injected to make dark mode and notifications work.*
+
 + For =Prefer Dark Mode= toggle to work, you need to enable dark theme in Whatsapp first.
-        + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
-        + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
+  + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
+  + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
 
 + Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
 
@@ -165,66 +202,25 @@ package() {
 
 + No support for multiple accounts/profiles.
 
++ If you opt for =use Less Memory=, the webpage is temporarily closed. but the app remains in tray. CPU consumption will increase each time the app is opened and the webpage is loaded.
+
++ When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
+
 * Future updates
-- [X] Mute notification sounds (when Notifications toggle is disabled)- titlebar menu option.
-- [ ] Delete debug file on app/profile change.
-- [ ] Search app menu from titlebar.
-- [ ] Option to toggle injection of JavaScript.
-- [X] Memory kill switch option.
-- [X] Lower memory usage in Tray/startup.
-- [X] Custom app icon with instant updates. =/usr/share/icons/hicolor/256x256/apps/whatsit_custom.png=
-- [X] Give another url to open it as a webapp.
-- [X] Ctrl+Shift+q quits app completely.
-- [ ] Icons for menu actions
++ [ ] Delete debug file on app/profile change.
++ [ ] Option to toggle injection of JavaScript.
++ [ ] Icons for menu buttons and actions.
++ [ ] Notifcations via freedesktop.
 
 
 * License
 + This project is licensed under the MIT license.
 + Check Licensing information at [[./LICENSE][LICENSE]].
 + *Copyright Disclaimer: Whatsapp is not owned by me.*
-+ The [[./resources/whatsit.png][icon]] used in this project was grabbed off the internet.
++ The [[./resources/][icons]] used in this project was grabbed off the internet.
 
 **** tldr;
 **** Use this app at your own risk.
 **** I will not be liable for any damages.
 
-* Size of binaries
-** Info
-+ =size= - list section sizes and total size of binary files.
 
-#+begin_quote man page
-The GNU size utility lists the section sizes and the total size
-for each of the binary files objfile on its argument list.
-
-[[https://man7.org/linux/man-pages/man1/size.1.html]]
-#+end_quote
-
-** v 1.0.1
-+ package: whatsit-git-a6e076c-1-x86_64.pkg.tar.zst
-+ pkackage sha256: =654a8f685b0a3d39da5266062c339c4e7c00280de240a930517705663b4d5c86=
-
-
-+ binary sha256: =6e651327bdaf74e54d46eefac4c80b561ea0fd6ad76f6a4c692b27a89848f51e=
-#+begin_example shell
-$ size whatsit_v1.0.1
-text    data     bss     dec     hex filename
-19025    1960       8   20993    5201 whatsit_v1.0.1
-
-$ stat -c '%s bytes' whatsit_v1.0.1
-35128 bytes
-#+end_example
-
-
-** v 2.0.0
-+ package: whatsit-2.0.0.0.g7364201.d-1-x86_64.pkg.tar.zst
-+ package sha256: =3941259779915423865721c50cf6cf103179f03cfd0428678cb22c52701e14ec=
-
-+ binary sha256: =1186e766e7191d57ef91c408e7c076465048eb529e35c49b11c3ed8bf55b105b=
-#+begin_example shell
-$ size whatsit_v2.0.0
-text    data     bss     dec     hex filename
-101771    5192      16  106979   1a1e3 whatsit_v2.0.0
-
-$ stat -c '%s bytes' whatsit_v2.0.0
-117560 bytes
-#+end_example
