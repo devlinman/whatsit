@@ -15,7 +15,7 @@
 
 * About Whatsit
 
-+ A lightweight, native desktop client for WhatsApp Web built with Qt 6 and Qt WebEngine.
++ A lightweight, native desktop client for WhatsApp Web built with ~Qt 6~ and ~Qt WebEngine~.
 
 + Whatsit is *NOT* Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
 
