@@ -11,7 +11,7 @@
 - [[#build][Build]]
 - [[#notes][Notes]]
 - [[#future-updates][Future updates]]
-- [[#license][License]]
+- [[#license][LICENSE]]
 
 * About Whatsit
 
@@ -118,7 +118,7 @@ Url=
 #+end_src
 
 * Install from AUR
-+ Now available from AUR - =whatsit-git=
++ Now available from AUR - =whatsit-git=. [[https://aur.archlinux.org/packages/whatsit-git][AUR Package.]]
 + Builds from latest commit from git on default branch (master).
 
 #+begin_src shell
@@ -211,13 +211,15 @@ package() {
 + [ ] Option to toggle injection of JavaScript.
 + [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
++ [ ] Help, About sections.
++ [ ] Command-line info - =version=, =help=, etc.
 
 
-* License
+* LICENSE
 + This project is licensed under the MIT license.
 + Check Licensing information at [[./LICENSE][LICENSE]].
 + *Copyright Disclaimer: Whatsapp is not owned by me.*
-+ The [[./resources/][icons]] used in this project was grabbed off the internet.
++ The [[./resources/][icons]] used in this project were grabbed off the internet.
 
 **** tldr;
 **** Use this app at your own risk.
