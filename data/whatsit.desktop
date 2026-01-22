@@ -2,10 +2,11 @@
 Type=Application
 Name=Whatsit
 Comment=WhatsApp Web Client
-Exec=/usr/bin/whatsit
+Exec=/usr/bin/whatsit %u
 Icon=whatsit
 Terminal=false
 Categories=Network;Chat;
 StartupNotify=true
 StartupWMClass=whatsit
 X-KDE-Notifications=whatsit
+MimeType=x-scheme-handler/whatsapp;x-scheme-handler/whatsit;

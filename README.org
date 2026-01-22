@@ -4,7 +4,7 @@
 
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
-- [[#improvements-in-v-30x][Improvements in v 3.0.x]]
+- [[#improvements-in-v-310][Improvements in v 3.1.0]]
 - [[#paths-and-storage-locations][Paths and Storage Locations]]
 - [[#configuration][Configuration]]
 - [[#install-from-aur][Install from AUR]]
@@ -45,18 +45,10 @@
 + Reduce memory usage & kill switch
 
 
-* Improvements in v 3.0.x
-** Title bar menu:
-*** System
-+ Mute sounds (including notifications and media)
+* Improvements in v 3.1.0
 
-*** Advanced
-+ Use Less Memory - When hidden to tray, app consumes less memory by unloading the webpage.
-+ Memory Kill switch - Checks its memory every 30 seconds and quits if memory usage is above the threshold.
-+ Customize App Icon, Tray Icon and App URL.
-
-** Others
-+ Tray icon toggles show/hide window on click.
++ Help, About sections.
++ xdg-open whatsapp links in app when opened from any browser.
 + =Ctrl+Shift+Q= keybinding quits the app completely.
 
 
@@ -218,9 +210,7 @@ package() {
 + [ ] Option to toggle injection of JavaScript.
 + [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
-+ [ ] Help, About sections.
-+ [ ] Command-line info - =version=, =help=, etc.
-+ [ ] xdg-open whatsapp links in app when opened from any browser.
++ [ ] Command-line info - =version=, =help= =show/hide=, etc.
 
 
 * LICENSE

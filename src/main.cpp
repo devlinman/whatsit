@@ -1,14 +1,21 @@
 // main.cpp
-#include <QApplication>
-#include <iostream>
-#include "mainwindow.h"
+#include "configmanager.h"
 #include "ipcmanager.h"
 #include "logger.h"
-#include "configmanager.h"
+#include "mainwindow.h"
+#include <QApplication>
+#include <iostream>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     Logger::log("Application starting...");
+
+    // Log arguments for debugging
+    /*
+    // for (int i = 0; i < argc; ++i) {
+    //     Logger::log(QString("Arg[%1]: %2").arg(i).arg(argv[i]));
+    // }
+    */
+
     QApplication app(argc, argv);
     app.setApplicationName("whatsit");
     app.setOrganizationName("whatsit");
@@ -30,14 +37,16 @@ int main(int argc, char *argv[])
     // Clean up our specific flags to prevent accumulation/conflicts
     flags.remove("--blink-settings=preferredColorScheme=1");
     flags.remove("--blink-settings=preferredColorScheme=2");
-    
-    flags = flags.simplified(); 
+
+    flags = flags.simplified();
 
     if (config.preferDarkMode()) {
-        if (!flags.isEmpty()) flags += " ";
+        if (!flags.isEmpty())
+            flags += " ";
         flags += "--blink-settings=preferredColorScheme=1";
     } else {
-        if (!flags.isEmpty()) flags += " ";
+        if (!flags.isEmpty())
+            flags += " ";
         flags += "--blink-settings=preferredColorScheme=2";
     }
 

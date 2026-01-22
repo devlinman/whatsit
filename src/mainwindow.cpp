@@ -19,6 +19,7 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QVBoxLayout>
 #include <cmath>
 #include <unistd.h>
@@ -114,6 +115,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ipc = new IpcManager(this);
     connect(ipc, &IpcManager::raiseRequested, this, &MainWindow::showAndRaise);
+    connect(ipc, &IpcManager::openUrlRequested, this,
+            &MainWindow::handleIncomingUrl);
     ipc->start();
 
     memoryTimer = new QTimer(this);
@@ -136,7 +139,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     setupMenus();
 
-    // URL Logic
     QUrl targetUrl = getTargetUrl();
 
     if (config.useLessMemory() && config.startMinimizedInTray()) {
@@ -147,13 +149,83 @@ MainWindow::MainWindow(QWidget *parent)
         Logger::log("Loading URL: " + targetUrl.toString());
         view->load(targetUrl);
     }
+
+    // Check for command line URL override
+    QStringList args = QCoreApplication::arguments();
+    for (int i = 1; i < args.size(); ++i) {
+        if (args[i].startsWith("http") || args[i].startsWith("whatsapp")) {
+            // Logger::log("Processing URL override from command line: " +
+            // args[i]);
+            Logger::log("Processing URL override from command line...");
+            handleIncomingUrl(QUrl(args[i]));
+            break;
+        }
+    }
 }
 
 MainWindow::~MainWindow() {
+    clearSendMessageUrl();
     if (config.rememberWindowSize())
         config.setWindowSize(size());
 
     config.sync();
+}
+
+void MainWindow::clearSendMessageUrl() {
+    if (!sendMessageURL.isEmpty()) {
+        sendMessageURL.clear();
+        Logger::log("Lifecycle Event: sendMessageURL cleared from memory.");
+    }
+}
+
+void MainWindow::handleIncomingUrl(const QUrl &url) {
+    // Logger::log("Handling incoming URL: " + url.toString());
+    showAndRaise();
+
+    if (!url.isValid()) {
+        Logger::log("Malformed URL: Invalid.");
+        return;
+    }
+
+    QUrl finalUrl = url;
+
+    if (url.scheme() == "whatsapp") {
+        if (url.host() == "send") {
+            finalUrl = QUrl("https://web.whatsapp.com/send/");
+            finalUrl.setQuery(url.query());
+        }
+    }
+
+    if (finalUrl.host() == "web.whatsapp.com") {
+        QString path = finalUrl.path();
+        if (path == "/" || path.isEmpty()) {
+            Logger::log("Base URL requested. only focus window.");
+            return;
+        }
+
+        // Handle /send or /send/
+        if (path.startsWith("/send")) {
+            QUrlQuery query(finalUrl);
+            if (query.hasQueryItem("text")) {
+                QString text = query.queryItemValue("text");
+                // Log text parameter
+                // Logger::log("Send intent detected. Text: " + text);
+            } else {
+                // Logger::log("Send intent missing 'text' parameter.");
+            }
+
+            sendMessageURL = finalUrl;
+            // Logger::log("Stored sendMessageURL: " +
+            // sendMessageURL.toString());
+            Logger::log("recieved valid sendMessageURL");
+
+            view->load(sendMessageURL);
+
+            return;
+        }
+    }
+
+    Logger::log("Handle URl::Malformed or unrecognised URL format. Ignoring.");
 }
 
 // unified show / raise behavior
@@ -172,6 +244,7 @@ void MainWindow::handleExitRequest() {
         Logger::log("Minimizing to tray instead of quitting.");
         hide();
     } else {
+        clearSendMessageUrl();
         Logger::log("Quitting application.");
         qApp->quit();
     }
@@ -183,6 +256,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         hide();
         event->ignore();
     } else {
+        clearSendMessageUrl();
         Logger::log("Close event accepted -> Quitting.");
         event->accept();
         qApp->quit();
@@ -191,6 +265,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::hideEvent(QHideEvent *event) {
     QMainWindow::hideEvent(event);
+    clearSendMessageUrl();
     updateMemoryState();
 }
 
@@ -215,7 +290,11 @@ void MainWindow::updateMemoryState() {
         // page
         if (view->url().toString() == "about:blank") {
             Logger::log("Use Less Memory: Restoring content");
-            view->setUrl(getTargetUrl());
+            if (sendMessageURL.isValid()) {
+                view->setUrl(sendMessageURL);
+            } else {
+                view->setUrl(getTargetUrl());
+            }
         }
     }
 }
@@ -295,14 +374,18 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
             out << "[Desktop Entry]\n";
             out << "Type=Application\n";
             out << "Version=1.0\n";
-            out << "Name=whatsit\n";
-            out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
+            out << "Name=Whatsit\n";
+            out << "Comment=WhatsApp Web Client\n";
+            out << "Exec=" << QCoreApplication::applicationFilePath()
+                << " %u\n";
             out << "Icon=" << iconPath << "\n";
             out << "Terminal=false\n";
-            out << "Categories=Utility;\n";
-            // StartupWMClass ensures the window manager groups the window
-            // correctly with this desktop file
+            out << "Categories=Network;Chat;\n";
+            out << "StartupNotify=true\n";
             out << "StartupWMClass=whatsit\n";
+            out << "X-KDE-Notifications=whatsit\n";
+            out << "MimeType=x-scheme-handler/whatsapp;x-scheme-handler/"
+                   "whatsit;\n";
             desktopFile.close();
             Logger::log("Updated desktop file with custom icon: " + iconPath);
 
@@ -385,6 +468,34 @@ void MainWindow::setupMenus() {
     rememberDl->setChecked(config.rememberDownloadPaths());
     connect(rememberDl, &QAction::toggled,
             [&](bool v) { config.setRememberDownloadPaths(v); });
+
+    general->addSeparator();
+
+    auto *aboutAction = general->addAction("About Whatsit");
+    this->addAction(aboutAction);
+    connect(aboutAction, &QAction::triggered, this, [this]() {
+        QMessageBox::about(
+            this, "About Whatsit",
+            "<h2>Whatsit</h2>"
+            "<p>A lightweight, native desktop client for WhatsApp Web.</p>"
+            "<p><b>Developer:</b> devlinman</p>"
+            "<p><b>GitHub:</b> "
+            "<a href=\"https://github.com/devlinman/whatsit\">"
+            "https://github.com/devlinman/whatsit"
+            "</a></p>"
+            "<p><b>License:</b> MIT License</p>"
+            "<p>Check the LICENSE file for more details.</p>"
+            "<br>"
+            "<h3>Keybindings:</h3>"
+            "<ul>"
+            "<li><b>Ctrl+Q</b> — Quit or hide the app (depending on "
+            "configuration)</li>"
+            "<li><b>Ctrl+Shift+Q</b> — Quit the app completely</li>"
+            "</ul>");
+    });
+    auto *quitAction = general->addAction("Quit App");
+    this->addAction(quitAction);
+    connect(quitAction, &QAction::triggered, [this] { qApp->quit(); });
 
     // --- Window ---
     auto *maxDef = window->addAction("Maximized by Default");

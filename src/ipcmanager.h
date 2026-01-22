@@ -19,6 +19,7 @@ public:
 
 signals:
     void raiseRequested();
+    void openUrlRequested(const QUrl &url);
 
 private:
     QLocalServer server;

@@ -23,6 +23,8 @@ class MainWindow : public QMainWindow {
 
   private slots:
     void checkMemoryUsage();
+    void handleIncomingUrl(const QUrl &url);
+    void clearSendMessageUrl();
 
   private:
     void setupMenus();
@@ -36,6 +38,7 @@ class MainWindow : public QMainWindow {
     void showAndRaise();
 
     QWebEngineView *view;
+    QUrl sendMessageURL;
 
     ConfigManager config;
     WebEngineHelper *web;

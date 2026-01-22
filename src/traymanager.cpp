@@ -15,8 +15,8 @@ void TrayManager::initialize()
     tray->setIconByName("whatsit");
 
     auto *menu = new QMenu;
-    menu->addAction("Show", this, &TrayManager::showRequested);
-    menu->addAction("Hide", this, &TrayManager::hideRequested);
+    menu->addAction(QIcon::fromTheme("view-visible"), "Show", this, &TrayManager::showRequested);
+    menu->addAction(QIcon::fromTheme("view-hidden"), "Hide", this, &TrayManager::hideRequested);
 
     tray->setContextMenu(menu);
 
