@@ -164,28 +164,35 @@ sudo make install
 #+begin_src shell
 # Created by devlinman
 pkgname=whatsit
-pkgver=
+pkgver=0
 pkgrel=1
 pkgdesc="whatsit"
 arch=('x86_64')
 license=('MIT')
 depends=()
-makedepends=('cmake' 'vulkan-headers')
-source=("git+https://github.com/devlinman/whatsit")
-sha256sums=(SKIP)
+makedepends=('cmake' 'vulkan-headers' 'git')
+source=("git+https://github.com/devlinman/whatsit.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  git describe --tags --dirty | sed 's/^v//;s/-/./g'
+}
 
 build() {
-    cmake -S "/media/DATA/SOFTWARE/Programming/Projects/whatsit" -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
-    cmake --build build
+  cmake -S "$srcdir/$pkgname" \
+        -B "$srcdir/build" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+
+  cmake --build "$srcdir/build"
 }
 
 package() {
-    DESTDIR="$pkgdir" cmake --install build
+  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
 }
 
-
 #+end_src
-
 
 * Notes
 + *Some JavaScript is injected to make dark mode and notifications work.*
@@ -206,13 +213,14 @@ package() {
 
 + When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
 
-* Future updates
+* TODO Future updates
 + [ ] Delete debug file on app/profile change.
 + [ ] Option to toggle injection of JavaScript.
 + [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
 + [ ] Help, About sections.
 + [ ] Command-line info - =version=, =help=, etc.
++ [ ] xdg-open whatsapp links in app when opened from any browser.
 
 
 * LICENSE
