@@ -5,19 +5,16 @@
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
 - [[#improvements-in-v-310][Improvements in v 3.1.0]]
+- [[#notes][Notes]]
+- [[#build--install][Build & Install]]
 - [[#paths-and-storage-locations][Paths and Storage Locations]]
 - [[#configuration][Configuration]]
-- [[#install-from-aur][Install from AUR]]
-- [[#build][Build]]
-- [[#notes][Notes]]
 - [[#future-updates][Future updates]]
 - [[#license][LICENSE]]
 
 * About Whatsit
 
-+ A lightweight, native desktop client for WhatsApp Web built with ~Qt 6~ and ~Qt WebEngine~.
-
-+ Whatsit is *NOT* Electron-based. It uses system Qt and WebEngine, resulting in significantly lower memory usage, faster startup, and proper KDE/Qt integration.
++ A lightweight, native desktop client for WhatsApp Web built with ~Qt 6~ and ~Qt WebEngine~, and is *NOT* Electron-based.
 
 + Name Inspired by the series /Stranger Things S5/.
 
@@ -25,10 +22,11 @@
 
 + My setup is Arch-KDE Plasma-Wayland. If your setup is similar, the app should work well.
 
-+ In =v3.0.x=, additional features such as memory kill switch and custom app and tray icons, etc.
++ In =v3.x.x=, additional features such as memory kill switch and custom app and tray icons, etc.
   You may call these features bloat, but I like to have those. If you don't want those, use lower versions of the app.
 
 + +I don't need a system tray... I don't need notifications...+
+
   Turns out, I do need a system tray icon, and notifications. So they are implemented in =v2.0.0=.
 
 + If you want the minimal and bare version, use =v1.0.1=.
@@ -39,18 +37,122 @@
 + Persistent login and chat storage
 + Uses standard XDG directories
 + KDE / Wayland friendly
-+ Dark mode support via configuration
-+ Very low overhead compared to Electron apps
++ Dark mode support via injecting JS
 + KDE Native Notification support
 + Reduce memory usage & kill switch
 
-
 * Improvements in v 3.1.0
-
 + Help, About sections.
 + xdg-open whatsapp links in app when opened from any browser.
 + =Ctrl+Shift+Q= keybinding quits the app completely.
 
+* Notes
++ *Some JavaScript is injected to make dark mode and notifications work.*
+
++ For =Prefer Dark Mode= toggle to work, you need to enable /dark theme/ in Whatsapp first.
+  + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
+  + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
+
++ Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
+
++ If no Size parameter is set, the app defaults to =1200x800=.
+
++ If =MaximizeByDefault= key is set to "=true=", it overrides =RememberPreviousWindowSize= key.
+
++ No support for multiple accounts/profiles.
+
++ If you opt for =use Less Memory=, the webpage is temporarily closed. but the app remains in tray. CPU consumption will increase each time the app is opened and the webpage is loaded.
+
++ When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
+
+* Build & Install
+** Install From AUR
++ Now available from AUR - =whatsit-git=. [[https://aur.archlinux.org/packages/whatsit-git][AUR Package.]]
++ Builds from latest commit from git on default branch (master).
+
+#+begin_src shell
+yay -S whatsit-git
+#+end_src
+
+** Install from Releases
++ Installing the release package on Arch Linux (available in github.com/releases):
+  =sudo pacman -U <RELEASE_PACKAGE>=
+
++ If you installed the package using pacman, remove with:
+  =sudo pacman -R whatsit=
+
+** Build from Source
+
+*** Requirements
++ Linux
++ Qt >= 6.2
++ qt6-base
++ qt6-webengine
++ CMake
++ C++17 compatible compiler
+
++ Install using CMake
+#+begin_src shell
+# git clone and cd first.
+# Make sure you are in the repository root.
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+
+# Install the App.
+sudo make install
+#+end_src
+
++ Optional CMake Flags:
+        =-DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr=
+
++ Uninstall using CMake
+#+begin_src shell
+cd build
+sudo make uninstall
+#+end_src
+
+** PKGBUILD
++ This PKGBUILD builds from latest commit on github (on master branch).
+
++ To build using the PKGBUILD file given below, download it, and run:
+
+=makepkg -si=
+
+#+begin_src shell
+# Created by devlinman
+pkgname=whatsit
+pkgver=0
+pkgrel=1
+pkgdesc="whatsit"
+arch=('x86_64')
+license=('MIT')
+depends=()
+makedepends=('cmake' 'vulkan-headers' 'git')
+source=("git+https://github.com/devlinman/whatsit.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$pkgname"
+  git describe --tags --dirty | sed 's/^v//;s/-/./g'
+}
+
+build() {
+  cmake -S "$srcdir/$pkgname" \
+        -B "$srcdir/build" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+
+  cmake --build "$srcdir/build"
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
+}
+
+#+end_src
 
 * Paths and Storage Locations
 ** Files:
@@ -109,101 +211,6 @@ TrayIcon=whatsit_mono
 Url=
 #+end_src
 
-* Install from AUR
-+ Now available from AUR - =whatsit-git=. [[https://aur.archlinux.org/packages/whatsit-git][AUR Package.]]
-+ Builds from latest commit from git on default branch (master).
-
-#+begin_src shell
-yay -S whatsit-git
-#+end_src
-
-
-* Build
-
-** Requirements
-+ Linux
-+ Qt >= 6.2
-+ qt6-base
-+ qt6-webengine
-+ CMake
-+ C++17 compatible compiler
-
-** Build from Source
-#+begin_src shell
-# git clone and cd first.
-# Make sure you are in the repository root.
-mkdir build
-cd build
-cmake ..
-make -j$(nproc)
-
-# Install the App.
-sudo make install
-#+end_src
-
-+ Installing the release package on Arch Linux (available in releases):
-  =sudo pacman -U <RELEASE_PACKAGE>=
-
-+ If you installed the package using pacman, remove with:
-  =sudo pacman -R whatsit=
-
-
-** PKGBUILD
-+ To build using the PKGBUILD file given below, download it, and run:
-    =makepkg -si=
-+ This PKGBUILD builds from latest commit on github (on master branch).
-
-#+begin_src shell
-# Created by devlinman
-pkgname=whatsit
-pkgver=0
-pkgrel=1
-pkgdesc="whatsit"
-arch=('x86_64')
-license=('MIT')
-depends=()
-makedepends=('cmake' 'vulkan-headers' 'git')
-source=("git+https://github.com/devlinman/whatsit.git")
-sha256sums=('SKIP')
-
-pkgver() {
-  cd "$srcdir/$pkgname"
-  git describe --tags --dirty | sed 's/^v//;s/-/./g'
-}
-
-build() {
-  cmake -S "$srcdir/$pkgname" \
-        -B "$srcdir/build" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr
-
-  cmake --build "$srcdir/build"
-}
-
-package() {
-  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
-}
-
-#+end_src
-
-* Notes
-+ *Some JavaScript is injected to make dark mode and notifications work.*
-
-+ For =Prefer Dark Mode= toggle to work, you need to enable dark theme in Whatsapp first.
-  + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
-  + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
-
-+ Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
-
-+ If no Size parameter is set, the app defaults to =1200x800=.
-
-+ If =MaximizeByDefault= key is set to "=true=", it overrides =RememberPreviousWindowSize= key.
-
-+ No support for multiple accounts/profiles.
-
-+ If you opt for =use Less Memory=, the webpage is temporarily closed. but the app remains in tray. CPU consumption will increase each time the app is opened and the webpage is loaded.
-
-+ When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
 
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
@@ -211,6 +218,7 @@ package() {
 + [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
++ [ ] Better Dark mode Support.
 
 
 * LICENSE

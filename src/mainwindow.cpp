@@ -491,7 +491,14 @@ void MainWindow::setupMenus() {
             "<li><b>Ctrl+Q</b> — Quit or hide the app (depending on "
             "configuration)</li>"
             "<li><b>Ctrl+Shift+Q</b> — Quit the app completely</li>"
-            "</ul>");
+            "</ul>"
+            "<br>"
+            "<h3>Note:</h3>"
+            "<p>If Dark Mode is not working properly,</p>"
+            "<p>Go to Whatsapp Settings -> Chats -> Theme</p>"
+            "<p>and choose Dark. Then apply the menu option - Prefer Dark Mode.</p>"
+            "<p>If the dark mode is still broken, restart the app completely.</p>"
+        );
     });
     auto *quitAction = general->addAction("Quit App");
     this->addAction(quitAction);
