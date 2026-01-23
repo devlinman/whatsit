@@ -4,11 +4,10 @@
 
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
+- [[#wiki--documentation][Wiki & Documentation]]
 - [[#improvements-in-v-310][Improvements in v 3.1.0]]
 - [[#notes][Notes]]
-- [[#build--install][Build & Install]]
-- [[#paths-and-storage-locations][Paths and Storage Locations]]
-- [[#configuration][Configuration]]
+- [[#install][Install]]
 - [[#future-updates][Future updates]]
 - [[#license][LICENSE]]
 
@@ -25,26 +24,25 @@
 + In =v3.x.x=, additional features such as memory kill switch and custom app and tray icons, etc.
   You may call these features bloat, but I like to have those. If you don't want those, use lower versions of the app.
 
-+ +I don't need a system tray... I don't need notifications...+
-
-  Turns out, I do need a system tray icon, and notifications. So they are implemented in =v2.0.0=.
-
-+ If you want the minimal and bare version, use =v1.0.1=.
++ If you want the minimal and bare version, use =v1.0.1=. Tray icon and Notifications are implemented in =v2.0.0=.
 
 ** Features
-+ Native Qt 6 application
-+ Qt WebEngine-based (Chromium)
++ Native: Qt 6 & Qt WebEngine-based
 + Persistent login and chat storage
 + Uses standard XDG directories
 + KDE / Wayland friendly
 + Dark mode support via injecting JS
 + KDE Native Notification support
 + Reduce memory usage & kill switch
++ Opens whatsapp links from browsers to send messages.
+
+* Wiki & Documentation
+
++ Check the [[https://github.com/devlinman/whatsit/wiki][wiki docs]] for more information.
 
 * Improvements in v 3.1.0
-+ Help, About sections.
++ About section.
 + xdg-open whatsapp links in app when opened from any browser.
-+ =Ctrl+Shift+Q= keybinding quits the app completely.
 
 * Notes
 + *Some JavaScript is injected to make dark mode and notifications work.*
@@ -65,7 +63,7 @@
 
 + When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
 
-* Build & Install
+* Install
 ** Install From AUR
 + Now available from AUR - =whatsit-git=. [[https://aur.archlinux.org/packages/whatsit-git][AUR Package.]]
 + Builds from latest commit from git on default branch (master).
@@ -81,136 +79,6 @@ yay -S whatsit-git
 + If you installed the package using pacman, remove with:
   =sudo pacman -R whatsit=
 
-** Build from Source
-
-*** Requirements
-+ Linux
-+ Qt >= 6.2
-+ qt6-base
-+ qt6-webengine
-+ CMake
-+ C++17 compatible compiler
-
-+ Install using CMake
-#+begin_src shell
-# git clone and cd first.
-# Make sure you are in the repository root.
-mkdir build
-cd build
-cmake ..
-make -j$(nproc)
-
-# Install the App.
-sudo make install
-#+end_src
-
-+ Optional CMake Flags:
-        =-DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr=
-
-+ Uninstall using CMake
-#+begin_src shell
-cd build
-sudo make uninstall
-#+end_src
-
-** PKGBUILD
-+ This PKGBUILD builds from latest commit on github (on master branch).
-
-+ To build using the PKGBUILD file given below, download it, and run:
-
-=makepkg -si=
-
-#+begin_src shell
-# Created by devlinman
-pkgname=whatsit
-pkgver=0
-pkgrel=1
-pkgdesc="whatsit"
-arch=('x86_64')
-license=('MIT')
-depends=()
-makedepends=('cmake' 'vulkan-headers' 'git')
-source=("git+https://github.com/devlinman/whatsit.git")
-sha256sums=('SKIP')
-
-pkgver() {
-  cd "$srcdir/$pkgname"
-  git describe --tags --dirty | sed 's/^v//;s/-/./g'
-}
-
-build() {
-  cmake -S "$srcdir/$pkgname" \
-        -B "$srcdir/build" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr
-
-  cmake --build "$srcdir/build"
-}
-
-package() {
-  DESTDIR="$pkgdir" cmake --install "$srcdir/build"
-}
-
-#+end_src
-
-* Paths and Storage Locations
-** Files:
-+ debug file at =~/.cache/whatsit/whatsit.log=
-+ icon at =/usr/share/icons/hicolor/256x256/apps/whatsit.png=
-+ desktop file at =/usr/share/applications/whatsit.desktop=
-+ notifyrc at =/usr/share/knotifications6/whatsit.notifyrc=
-+ binary at =/usr/bin/whatsit=
-+ main config file at =~/.config/whatsit/whatsit.ini=
-+ customization config file at =~/.config/whatsit/custom.ini=
-
-** Folders:
-+ cache at =~/.cache/whatsit/whatsit=
-+ profile and cookies at =~/.local/share/whatsit/whatsit=
-
-
-* Configuration
-
-+ Main config file located at =~/.config/whatsit/whatsit.ini=.
-+ It is generated automatically on first run.
-
-+ Example config:
-
-#+begin_src ini
-[Advanced]
-MemoryLimit=2
-UseLessMemory=true
-
-[Debug]
-EnableFileLogging=false
-
-[%General]
-PreferDarkMode=true
-RememberDownloadPaths=true
-
-[System]
-AutostartOnLogin=true
-MuteAudio=true
-StartMinimizedInTray=true
-SystemNotifications=true
-
-[Window]
-MaximizedByDefault=true
-MinimizeToTray=true
-RememberWindowSize=true
-Size=@Size(1920 1046)
-ZoomLevel=1.3
-#+end_src
-
-+ If you customize tray icon or app icon, or app url, you will find them at =~/.config/whatsit/custom.ini=.
-+ If any of the keys are left empty, the app will use fallback values.
-#+begin_src ini
-[Custom]
-AppIcon=WhatsApp
-TrayIcon=whatsit_mono
-Url=
-#+end_src
-
 
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
@@ -219,7 +87,6 @@ Url=
 + [ ] Notifcations via freedesktop.
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
 + [ ] Better Dark mode Support.
-
 
 * LICENSE
 + This project is licensed under the MIT license.
