@@ -419,7 +419,9 @@ void MainWindow::setupMenus() {
     auto *advanced = menuBar()->addMenu("Advanced");
 
     // --- View ---
-    auto *zoomIn = viewMenu->addAction("Zoom In");
+    auto *zoomIn = viewMenu->addAction(
+        QIcon::fromTheme("zoom-in"),
+        "Zoom In");
     this->addAction(zoomIn);
     zoomIn->setShortcut(QKeySequence::ZoomIn);
     connect(zoomIn, &QAction::triggered, [this] {
@@ -429,7 +431,9 @@ void MainWindow::setupMenus() {
         config.setZoomLevel(newZoom);
     });
 
-    auto *zoomOut = viewMenu->addAction("Zoom Out");
+    auto *zoomOut = viewMenu->addAction(
+        QIcon::fromTheme("zoom-out"),
+        "Zoom Out");
     this->addAction(zoomOut);
     zoomOut->setShortcut(QKeySequence::ZoomOut);
     connect(zoomOut, &QAction::triggered, [this] {
@@ -441,7 +445,9 @@ void MainWindow::setupMenus() {
         config.setZoomLevel(newZoom);
     });
 
-    auto *zoomReset = viewMenu->addAction("Reset Zoom");
+    auto *zoomReset = viewMenu->addAction(
+        QIcon::fromTheme("zoom-original"),
+        "Reset Zoom");
     this->addAction(zoomReset);
     zoomReset->setShortcut(tr("Ctrl+0"));
     connect(zoomReset, &QAction::triggered, [this] {
@@ -462,7 +468,9 @@ void MainWindow::setupMenus() {
     //     qApp->quit();
     // });
 
-    auto *rememberDl = general->addAction("Remember subsequent Download paths");
+    auto *rememberDl = general->addAction(
+        QIcon::fromTheme("download"),
+        "Remember subsequent Download paths");
     this->addAction(rememberDl);
     rememberDl->setCheckable(true);
     rememberDl->setChecked(config.rememberDownloadPaths());
@@ -471,7 +479,9 @@ void MainWindow::setupMenus() {
 
     general->addSeparator();
 
-    auto *aboutAction = general->addAction("About Whatsit");
+    auto *aboutAction = general->addAction(
+        QIcon::fromTheme("help-about"),
+        "About Whatsit");
     this->addAction(aboutAction);
     connect(aboutAction, &QAction::triggered, this, [this]() {
         QMessageBox::about(
@@ -494,7 +504,9 @@ void MainWindow::setupMenus() {
             "</ul>"
         );
     });
-    auto *quitAction = general->addAction("Quit App");
+    auto *quitAction = general->addAction(
+        QIcon::fromTheme("application-exit"),
+        "Quit App");
     this->addAction(quitAction);
     connect(quitAction, &QAction::triggered, [this] { qApp->quit(); });
 
@@ -571,7 +583,9 @@ void MainWindow::setupMenus() {
         updateMemoryState();
     });
 
-    auto *memKill = advanced->addAction("Memory Kill Switch");
+    auto *memKill = advanced->addAction(
+        QIcon::fromTheme("computer"),
+        "Memory Kill Switch");
     this->addAction(memKill);
     connect(memKill, &QAction::triggered, [this] {
         QDialog dlg(this);
@@ -625,7 +639,9 @@ void MainWindow::setupMenus() {
 
     advanced->addSeparator();
 
-    auto *reload = advanced->addAction("Reload Config and Cache", [&] {
+    auto *reload = advanced->addAction(
+        QIcon::fromTheme("view-refresh"),
+        "Reload Config and Cache", [&] {
         Logger::log("Reloading config and cache...");
         QDir(config.configDir()).removeRecursively();
         QDir(QStandardPaths::writableLocation(
@@ -637,7 +653,9 @@ void MainWindow::setupMenus() {
     });
     this->addAction(reload);
 
-    auto *delProfile = advanced->addAction("Delete Profile and Restart", [&] {
+    auto *delProfile = advanced->addAction(
+        QIcon::fromTheme("edit-delete"),
+        "Delete Profile and Restart", [&] {
         Logger::log("Deleting profile and restarting...");
         QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
             .removeRecursively();
@@ -646,7 +664,9 @@ void MainWindow::setupMenus() {
     });
     this->addAction(delProfile);
 
-    auto *customize = advanced->addAction("Customize App");
+    auto *customize = advanced->addAction(
+        QIcon::fromTheme("configure"),
+        "Customize App");
     this->addAction(customize);
     connect(customize, &QAction::triggered, [this] {
         QDialog dlg(this);

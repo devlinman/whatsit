@@ -36,6 +36,7 @@
 * Wiki & Documentation
 
 + Check the [[https://github.com/devlinman/whatsit/wiki][wiki docs]] for more information.
++ =Notes= section below will be removed in the next minor update.
 
 * Improvements in v 4.0.0
 *** MAJOR REGRESSION
@@ -57,8 +58,14 @@
 + If you want to examine the changes, go through the corresponding commit. In particular, check =webenginehelper.cpp= for changes regarding JS.
 
 *** Qt Licensing
++ Added 3rd party licenses. check the LICENSES section below.
+
+*** Icons
++ Added icons for titlebar menu buttons.
 
 * Notes
++ Now, Notes is available from  [[https://github.com/devlinman/whatsit/wiki/Notes][wiki docs - Notes]].
+
 + Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
 
 + If no Size parameter is set, the app defaults to =1200x800=.
@@ -80,12 +87,7 @@
 yay -S whatsit-git
 #+end_src
 
-** Install from Releases
-+ Installing the release package on Arch Linux (available in github.com/releases):
-  =sudo pacman -U <RELEASE_PACKAGE>=
-
-+ If you installed the package using pacman, remove with:
-  =sudo pacman -R whatsit=
+** Please refer to [[https://github.com/devlinman/whatsit/wiki ][wiki docs]] for more information on Build & Install.
 
 
 * TODO Future updates
