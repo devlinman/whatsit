@@ -1,0 +1,7 @@
+This application uses Qt 6.
+
+Qt is Copyright (C) The Qt Company Ltd.
+Licensed under the GNU Lesser General Public License v3.
+
+Source code for Qt is available at:
+https://code.qt.io/
