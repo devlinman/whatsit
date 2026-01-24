@@ -17,8 +17,8 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
-#include <QJsonObject>
-#include <QJsonDocument>
+// #include <QJsonObject>
+// #include <QJsonDocument>
 
 namespace {
 
@@ -83,7 +83,7 @@ namespace {
         };
     };
 
-} // namespace
+}
 
 WebEngineHelper::WebEngineHelper(QWebEngineView *view,
                                  ConfigManager *config,
@@ -200,7 +200,7 @@ void WebEngineHelper::initialize()
     });
 
     setAudioMuted(m_config->muteAudio());
-    applyTheme();
+    // applyTheme();
 }
 
 void WebEngineHelper::setAudioMuted(bool muted)
@@ -211,151 +211,151 @@ void WebEngineHelper::setAudioMuted(bool muted)
     }
 }
 
-void WebEngineHelper::applyTheme()
-{
-    if (!m_profile || !m_view) {
-        Logger::log("WebEngineHelper::applyTheme: Profile or View is null. Aborting.");
-        return;
-    }
+// void WebEngineHelper::applyTheme()
+// {
+//     if (!m_profile || !m_view) {
+//         Logger::log("WebEngineHelper::applyTheme: Profile or View is null. Aborting.");
+//         return;
+//     }
 
-    QWebEngineScript script;
-    script.setName("whatsit_debug_injection");
-    script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-    script.setWorldId(QWebEngineScript::MainWorld);
-    script.setRunsOnSubFrames(true);
-    script.setSourceCode(R"(
-        console.log("WHATSIT_DEBUG: Injecting Notification Debugger...");
-        const OriginalNotification = window.Notification;
-        
-        window.Notification = function(title, options) {
-            console.log("WHATSIT_DEBUG: new Notification() called!");
-            console.log("  Title:", title);
-            console.log("  Options:", JSON.stringify(options));
-            return new OriginalNotification(title, options);
-        };
-        
-        // Copy static properties/methods
-        for (let prop in OriginalNotification) {
-            window.Notification[prop] = OriginalNotification[prop];
-        }
-        
-        window.Notification.prototype = OriginalNotification.prototype;
-        
-        window.Notification.requestPermission = function(callback) {
-             console.log("WHATSIT_DEBUG: Notification.requestPermission called!");
-             return OriginalNotification.requestPermission(callback);
-        };
-        
-        console.log("WHATSIT_DEBUG: Notification Debugger Injected.");
-    )");
-    m_profile->scripts()->insert(script);
+//     QWebEngineScript script;
+//     script.setName("whatsit_debug_injection");
+//     script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+//     script.setWorldId(QWebEngineScript::MainWorld);
+//     script.setRunsOnSubFrames(true);
+//     script.setSourceCode(R"(
+//         console.log("WHATSIT_DEBUG: Injecting Notification Debugger...");
+//         const OriginalNotification = window.Notification;
 
-    QWebEngineScript themeScript;
-    themeScript.setName("whatsit_theme_injection");
-    themeScript.setInjectionPoint(QWebEngineScript::DocumentReady);
-    themeScript.setWorldId(QWebEngineScript::MainWorld);
-    themeScript.setRunsOnSubFrames(false);
+//         window.Notification = function(title, options) {
+//             console.log("WHATSIT_DEBUG: new Notification() called!");
+//             console.log("  Title:", title);
+//             console.log("  Options:", JSON.stringify(options));
+//             return new OriginalNotification(title, options);
+//         };
 
-    QString js;
+//         // Copy static properties/methods
+//         for (let prop in OriginalNotification) {
+//             window.Notification[prop] = OriginalNotification[prop];
+//         }
 
-    // Common helper function to be injected
-    QString commonJs = R"JS(
-        function safeSet(cls, mode) {
-            try {
-                if (!document.body) return;
-                
-                if (mode === 'dark') {
-                    if (!document.body.classList.contains('dark')) {
-                         document.body.classList.add('dark');
-                    }
-                    if (!document.body.classList.contains('web')) {
-                         document.body.classList.add('web');
-                    }
-                    document.body.setAttribute('data-theme', 'dark');
-                    try { localStorage.setItem('theme', '"dark"'); } catch(e) {}
-                } else {
-                    if (document.body.classList.contains('dark')) {
-                        document.body.classList.remove('dark');
-                    }
-                    document.body.setAttribute('data-theme', 'light');
-                    try { localStorage.setItem('theme', '"light"'); } catch(e) {}
-                }
-            } catch (e) {
-                // Silenced to prevent log spam
-            }
-        }
-    )JS";
+//         window.Notification.prototype = OriginalNotification.prototype;
 
-    if (m_config->preferDarkMode()) {
-        js = commonJs + R"JS(
-            (function() {
-                function enforce() { safeSet('dark', 'dark'); }
-                
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', enforce);
-                } else {
-                    enforce();
-                }
+//         window.Notification.requestPermission = function(callback) {
+//              console.log("WHATSIT_DEBUG: Notification.requestPermission called!");
+//              return OriginalNotification.requestPermission(callback);
+//         };
 
-                // Robust Observer
-                try {
-                    const observer = new MutationObserver((mutations) => {
-                        // Debounce or simple check to avoid infinite loops if the site fights back hard
-                        // We simply check if the state is wrong before acting.
-                        if (document.body && !document.body.classList.contains('dark')) {
-                             enforce();
-                        }
-                    });
-                    
-                    if (document.body) {
-                        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                    } else {
-                        document.addEventListener('DOMContentLoaded', () => {
-                             if(document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                        });
-                    }
-                } catch(e) { console.error("Observer Error:", e); }
-            })();
-        )JS";
-    } else {
-        js = commonJs + R"JS(
-            (function() {
-                function enforce() { safeSet('dark', 'light'); }
-                
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', enforce);
-                } else {
-                    enforce();
-                }
-                
-                // Observer for light mode too, to prevent WA from auto-switching to dark if system is dark but user wants light here
-                 try {
-                    const observer = new MutationObserver((mutations) => {
-                        if (document.body && document.body.classList.contains('dark')) {
-                             enforce();
-                        }
-                    });
-                    
-                    if (document.body) {
-                        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                    } else {
-                         document.addEventListener('DOMContentLoaded', () => {
-                             if(document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-                        });
-                    }
-                } catch(e) { console.error("Observer Error:", e); }
-            })();
-        )JS";
-    }
+//         console.log("WHATSIT_DEBUG: Notification Debugger Injected.");
+//     )");
+//     m_profile->scripts()->insert(script);
 
-    script.setSourceCode(js);
-    m_profile->scripts()->insert(script);
-    
-    // Also run immediately if possible
-    if(m_view->page()) {
-        m_view->page()->runJavaScript(js);
-    }
-}
+    // QWebEngineScript themeScript;
+    // themeScript.setName("whatsit_theme_injection");
+    // themeScript.setInjectionPoint(QWebEngineScript::DocumentReady);
+    // themeScript.setWorldId(QWebEngineScript::MainWorld);
+    // themeScript.setRunsOnSubFrames(false);
+
+    // QString js;
+
+    // // Common helper function to be injected
+    // QString commonJs = R"JS(
+    //     function safeSet(cls, mode) {
+    //         try {
+    //             if (!document.body) return;
+
+    //             if (mode === 'dark') {
+    //                 if (!document.body.classList.contains('dark')) {
+    //                      document.body.classList.add('dark');
+    //                 }
+    //                 if (!document.body.classList.contains('web')) {
+    //                      document.body.classList.add('web');
+    //                 }
+    //                 document.body.setAttribute('data-theme', 'dark');
+    //                 try { localStorage.setItem('theme', '"dark"'); } catch(e) {}
+    //             } else {
+    //                 if (document.body.classList.contains('dark')) {
+    //                     document.body.classList.remove('dark');
+    //                 }
+    //                 document.body.setAttribute('data-theme', 'light');
+    //                 try { localStorage.setItem('theme', '"light"'); } catch(e) {}
+    //             }
+    //         } catch (e) {
+    //             // Silenced to prevent log spam
+    //         }
+    //     }
+    // )JS";
+
+    // if (m_config->preferDarkMode()) {
+    //     js = commonJs + R"JS(
+    //         (function() {
+    //             function enforce() { safeSet('dark', 'dark'); }
+
+    //             if (document.readyState === 'loading') {
+    //                 document.addEventListener('DOMContentLoaded', enforce);
+    //             } else {
+    //                 enforce();
+    //             }
+
+    //             // Robust Observer
+    //             try {
+    //                 const observer = new MutationObserver((mutations) => {
+    //                     // Debounce or simple check to avoid infinite loops if the site fights back hard
+    //                     // We simply check if the state is wrong before acting.
+    //                     if (document.body && !document.body.classList.contains('dark')) {
+    //                          enforce();
+    //                     }
+    //                 });
+
+    //                 if (document.body) {
+    //                     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    //                 } else {
+    //                     document.addEventListener('DOMContentLoaded', () => {
+    //                          if(document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    //                     });
+    //                 }
+    //             } catch(e) { console.error("Observer Error:", e); }
+    //         })();
+    //     )JS";
+    // } else {
+    //     js = commonJs + R"JS(
+    //         (function() {
+    //             function enforce() { safeSet('dark', 'light'); }
+
+    //             if (document.readyState === 'loading') {
+    //                 document.addEventListener('DOMContentLoaded', enforce);
+    //             } else {
+    //                 enforce();
+    //             }
+
+    //             // Observer for light mode too, to prevent WA from auto-switching to dark if system is dark but user wants light here
+    //              try {
+    //                 const observer = new MutationObserver((mutations) => {
+    //                     if (document.body && document.body.classList.contains('dark')) {
+    //                          enforce();
+    //                     }
+    //                 });
+
+    //                 if (document.body) {
+    //                     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    //                 } else {
+    //                      document.addEventListener('DOMContentLoaded', () => {
+    //                          if(document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    //                     });
+    //                 }
+    //             } catch(e) { console.error("Observer Error:", e); }
+    //         })();
+    //     )JS";
+    // }
+
+    // script.setSourceCode(js);
+    // m_profile->scripts()->insert(script);
+
+    // // Also run immediately if possible
+    // if(m_view->page()) {
+    //     m_view->page()->runJavaScript(js);
+    // }
+// }
 
 void WebEngineHelper::handleDownloadRequested(QWebEngineDownloadRequest *download)
 {
@@ -376,7 +376,7 @@ void WebEngineHelper::handleDownloadRequested(QWebEngineDownloadRequest *downloa
     );
 
     if (filePath.isEmpty())
-        return;
+        // return;
 
     download->setDownloadFileName(QFileInfo(filePath).fileName());
     download->setDownloadDirectory(QFileInfo(filePath).absolutePath());

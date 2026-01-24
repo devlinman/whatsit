@@ -30,27 +30,26 @@ int main(int argc, char *argv[]) {
     ConfigManager config;
     config.load();
 
-    // Get current flags (inherited from parent process if restarting)
-    QByteArray flagsEnv = qgetenv("QTWEBENGINE_CHROMIUM_FLAGS");
-    QString flags = QString::fromLocal8Bit(flagsEnv);
+    // // Get current flags (inherited from parent process if restarting)
+    // QByteArray flagsEnv = qgetenv("QTWEBENGINE_CHROMIUM_FLAGS");
+    // QString flags = QString::fromLocal8Bit(flagsEnv);
 
-    // Clean up our specific flags to prevent accumulation/conflicts
-    flags.remove("--blink-settings=preferredColorScheme=1");
-    flags.remove("--blink-settings=preferredColorScheme=2");
+    // // Clean up our specific flags to prevent accumulation/conflicts
+    // flags.remove("--blink-settings=preferredColorScheme=1");
+    // flags.remove("--blink-settings=preferredColorScheme=2");
 
-    flags = flags.simplified();
+    // flags = flags.simplified();
 
-    if (config.preferDarkMode()) {
-        if (!flags.isEmpty())
-            flags += " ";
-        flags += "--blink-settings=preferredColorScheme=1";
-    } else {
-        if (!flags.isEmpty())
-            flags += " ";
-        flags += "--blink-settings=preferredColorScheme=2";
-    }
-
-    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", flags.toLocal8Bit());
+    // if (config.preferDarkMode()) {
+    //     if (!flags.isEmpty())
+    //         flags += " ";
+    //     flags += "--blink-settings=preferredColorScheme=1";
+    // } else {
+    //     if (!flags.isEmpty())
+    //         flags += " ";
+    //     flags += "--blink-settings=preferredColorScheme=2";
+    // }
+    // qputenv("QTWEBENGINE_CHROMIUM_FLAGS", flags.toLocal8Bit());
 
     MainWindow w;
     if (!config.startMinimizedInTray()) {

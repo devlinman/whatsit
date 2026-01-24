@@ -5,17 +5,15 @@
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
 - [[#wiki--documentation][Wiki & Documentation]]
-- [[#improvements-in-v-310][Improvements in v 3.1.0]]
+- [[#improvements-in-v-400][Improvements in v 4.0.0]]
 - [[#notes][Notes]]
 - [[#install][Install]]
 - [[#future-updates][Future updates]]
-- [[#license][LICENSE]]
+- [[#licenses][LICENSES]]
 
 * About Whatsit
 
 + A lightweight, native desktop client for WhatsApp Web built with ~Qt 6~ and ~Qt WebEngine~, and is *NOT* Electron-based.
-
-+ Name Inspired by the series /Stranger Things S5/.
 
 + I have tried many Whatsapp web clients, but none of them are fast and light. None of them felt right...
 
@@ -31,7 +29,6 @@
 + Persistent login and chat storage
 + Uses standard XDG directories
 + KDE / Wayland friendly
-+ Dark mode support via injecting JS
 + KDE Native Notification support
 + Reduce memory usage & kill switch
 + Opens whatsapp links from browsers to send messages.
@@ -40,17 +37,28 @@
 
 + Check the [[https://github.com/devlinman/whatsit/wiki][wiki docs]] for more information.
 
-* Improvements in v 3.1.0
-+ About section.
-+ xdg-open whatsapp links in app when opened from any browser.
+* Improvements in v 4.0.0
+*** MAJOR REGRESSION
++ Dark mode was already properly implemented by  whatsapp web itself. No need to confuse users further with JS injection.
++ *Regression: ALL (Including Dark Mode) JS injection is removed.*
++ Titlebar menu option and Config file key value are also removed as well.
+
++ The app is more secure now (Not that it wasn't before...), offering a more vanilla experience.
+
++ Dark Mode can be directly enabled from whatsapp settings, and that setting is persistent anyway.
+
++ If any problem occurs, use =Reload Config and Cache= option. If problem persists, start an issue on github.
+
++ You are free, and you are also encouraged to examine the source code to verify the security of the app.
+  Essentially, User data (private messages) must not be exposed, unless for debugging purposes in dev-builds.
+
++ The code is commented out for reference, and it will be removed in next minor update.
+
++ If you want to examine the changes, go through the corresponding commit. In particular, check =webenginehelper.cpp= for changes regarding JS.
+
+*** Qt Licensing
 
 * Notes
-+ *Some JavaScript is injected to make dark mode and notifications work.*
-
-+ For =Prefer Dark Mode= toggle to work, you need to enable /dark theme/ in Whatsapp first.
-  + Go to =Whatsapp Settings= -> =Chats= -> =Theme= and choose =Dark=.
-  + If enabling the menu option is still breaking the view of the webpage, restart the app completely.
-
 + Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
 
 + If no Size parameter is set, the app defaults to =1200x800=.
@@ -82,15 +90,14 @@ yay -S whatsit-git
 
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
-+ [ ] Option to toggle injection of JavaScript.
 + [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
-+ [ ] Better Dark mode Support.
++ [X] Better Dark mode Support.
 
-* LICENSE
-+ This project is licensed under the MIT license.
-+ Check Licensing information at [[./LICENSE][LICENSE]].
+* LICENSES
++ This project (binary/source code) is licensed under the MIT license, compliant with the third-party licenses mentioned below.
++ Check Licensing information at [[./LICENSES/LICENSE][LICENSE]].
 + *Copyright Disclaimer: Whatsapp is not owned by me.*
 + The [[./resources/][icons]] used in this project were grabbed off the internet.
 
@@ -98,4 +105,24 @@ yay -S whatsit-git
 **** Use this app at your own risk.
 **** I will not be liable for any damages.
 
+*** Third-Party Licenses
 
++ This project uses the Qt framework (Qt6), including QtWebEngine, by dynamically linking against them.
+
+  Check [[./LICENSES/Qt-NOTICE.txt][Qt NOTICE]] for more information.
+
++ Qt is licensed under the GNU Lesser General Public License v3 (LGPLv3).
+
++ Check your Qt licensing using a command like this.
+  #+begin_src shell
+pacman -Qi qt6-webengine | grep License -A1
+
+Licenses        : GPL-3.0-only  LGPL-3.0-only  LicenseRef-Qt-Commercial  Qt-GPL-exception-1.0
+Groups          : qt6
+  #+end_src
+
++ A copy of the LGPLv3 license is provided in [[./LICENSES/LGPL-3.0.txt][LGPL v3]].
+
++ Qt source code is available from:
+https://code.qt.io/
+https://download.qt.io/

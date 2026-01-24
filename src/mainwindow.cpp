@@ -450,17 +450,17 @@ void MainWindow::setupMenus() {
     });
 
     // --- General ---
-    auto *dark = general->addAction("Prefer Dark Mode");
-    this->addAction(dark);
-    dark->setCheckable(true);
-    dark->setChecked(config.preferDarkMode());
-    connect(dark, &QAction::toggled, [&](bool v) {
-        Logger::log(QString("User toggled Prefer Dark Mode to: %1")
-                        .arg(v ? "ENABLED" : "DISABLED"));
-        config.setPreferDarkMode(v);
-        QProcess::startDetached(qApp->applicationFilePath());
-        qApp->quit();
-    });
+    // auto *dark = general->addAction("Prefer Dark Mode");
+    // this->addAction(dark);
+    // dark->setCheckable(true);
+    // dark->setChecked(config.preferDarkMode());
+    // connect(dark, &QAction::toggled, [&](bool v) {
+    //     Logger::log(QString("User toggled Prefer Dark Mode to: %1")
+    //                     .arg(v ? "ENABLED" : "DISABLED"));
+    //     config.setPreferDarkMode(v);
+    //     QProcess::startDetached(qApp->applicationFilePath());
+    //     qApp->quit();
+    // });
 
     auto *rememberDl = general->addAction("Remember subsequent Download paths");
     this->addAction(rememberDl);
@@ -492,12 +492,6 @@ void MainWindow::setupMenus() {
             "configuration)</li>"
             "<li><b>Ctrl+Shift+Q</b> — Quit the app completely</li>"
             "</ul>"
-            "<br>"
-            "<h3>Note:</h3>"
-            "<p>If Dark Mode is not working properly,</p>"
-            "<p>Go to Whatsapp Settings -> Chats -> Theme</p>"
-            "<p>and choose Dark. Then apply the menu option - Prefer Dark Mode.</p>"
-            "<p>If the dark mode is still broken, restart the app completely.</p>"
         );
     });
     auto *quitAction = general->addAction("Quit App");
