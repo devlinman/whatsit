@@ -5,8 +5,7 @@
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
 - [[#wiki--documentation][Wiki & Documentation]]
-- [[#improvements-in-v-400][Improvements in v 4.0.0]]
-- [[#notes][Notes]]
+- [[#improvements-in-v-40x][Improvements in v 4.0.x]]
 - [[#install][Install]]
 - [[#future-updates][Future updates]]
 - [[#licenses][LICENSES]]
@@ -36,9 +35,12 @@
 * Wiki & Documentation
 
 + Check the [[https://github.com/devlinman/whatsit/wiki][wiki docs]] for more information.
-+ =Notes= section below will be removed in the next minor update.
 
-* Improvements in v 4.0.0
+*** Now, Notes is available from  [[https://github.com/devlinman/whatsit/wiki/Notes][wiki docs - Notes]].
++ It contains important information about the working of the app.
++ It is recommended to have a look.
+
+* Improvements in v 4.0.x
 *** MAJOR REGRESSION
 + Dark mode was already properly implemented by  whatsapp web itself. No need to confuse users further with JS injection.
 + *Regression: ALL (Including Dark Mode) JS injection is removed.*
@@ -62,21 +64,8 @@
 
 *** Icons
 + Added icons for titlebar menu buttons.
-
-* Notes
-+ Now, Notes is available from  [[https://github.com/devlinman/whatsit/wiki/Notes][wiki docs - Notes]].
-
-+ Notifications will only show when the app is minimized, hidden, or out of view (in a different virtual desktop).
-
-+ If no Size parameter is set, the app defaults to =1200x800=.
-
-+ If =MaximizeByDefault= key is set to "=true=", it overrides =RememberPreviousWindowSize= key.
-
-+ No support for multiple accounts/profiles.
-
-+ If you opt for =use Less Memory=, the webpage is temporarily closed. but the app remains in tray. CPU consumption will increase each time the app is opened and the webpage is loaded.
-
-+ When =Memory Kill Switch= is activated and the threshold is chosen, the app checks for its own memory usage every =30= seconds.
+*** Tray icon in Hyprland (v4.0.1)
++ =Tray icon is not visible in waybar with hyprland=: closed. Tray manager updated. It now works on hyprland.
 
 * Install
 ** Install From AUR
@@ -92,10 +81,9 @@ yay -S whatsit-git
 
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
-+ [ ] Icons for menu buttons and actions.
 + [ ] Notifcations via freedesktop.
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
-+ [X] Better Dark mode Support.
++ [ ] RSS <-> PSS memory estimation method option??
 
 * LICENSES
 + This project (binary/source code) is licensed under the MIT license, compliant with the third-party licenses mentioned below.
@@ -111,19 +99,15 @@ yay -S whatsit-git
 
 + This project uses the Qt framework (Qt6), including QtWebEngine, by dynamically linking against them.
 
-  Check [[./LICENSES/Qt-NOTICE.txt][Qt NOTICE]] for more information.
-
-+ Qt is licensed under the GNU Lesser General Public License v3 (LGPLv3).
++ Check [[./LICENSES/Qt-NOTICE.txt][Qt NOTICE]] for more information. Qt is licensed under the GNU Lesser General Public License v3 ([[./LICENSES/LGPL-3.0.txt][LGPL v3]]).
 
 + Check your Qt licensing using a command like this.
-  #+begin_src shell
-pacman -Qi qt6-webengine | grep License -A1
 
+  #+begin_src shell
+$ pacman -Qi qt6-webengine | grep License -A1
 Licenses        : GPL-3.0-only  LGPL-3.0-only  LicenseRef-Qt-Commercial  Qt-GPL-exception-1.0
 Groups          : qt6
   #+end_src
-
-+ A copy of the LGPLv3 license is provided in [[./LICENSES/LGPL-3.0.txt][LGPL v3]].
 
 + Qt source code is available from:
 https://code.qt.io/

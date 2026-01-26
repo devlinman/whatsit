@@ -12,6 +12,8 @@ void TrayManager::initialize()
 {
     tray = new KStatusNotifierItem(this);
     tray->setTitle("whatsit");
+    tray->setCategory(KStatusNotifierItem::ApplicationStatus);
+    tray->setStatus(KStatusNotifierItem::Active);
     tray->setIconByName("whatsit");
 
     auto *menu = new QMenu;
