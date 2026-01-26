@@ -13,7 +13,6 @@ class ConfigManager {
     void sync();
 
     // --- General ---
-    // bool preferDarkMode() const;
     bool rememberDownloadPaths() const;
 
     // --- Window ---
@@ -52,7 +51,6 @@ class ConfigManager {
     void removeCustomConfig();
 
     // --- Setters ---
-    // void setPreferDarkMode(bool);
     void setRememberDownloadPaths(bool);
 
     void setMaximizedByDefault(bool);

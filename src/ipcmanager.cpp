@@ -14,7 +14,7 @@ bool IpcManager::notifyExistingInstance() {
     Logger::log("Checking for existing instance...");
 
     QStringList args = QCoreApplication::arguments();
-    // Log all arguments for debugging
+    // Debug: Log all arguments for debugging
     /*
     // for (const auto& arg : args) {
     //      Logger::log("Raw Arg: " + arg);
@@ -35,11 +35,13 @@ bool IpcManager::notifyExistingInstance() {
     for (int i = 1; i < args.size(); ++i) {
         if (args[i].startsWith("http") || args[i].startsWith("whatsapp")) {
             message += "|" + args[i];
+            // Debug:
             // Logger::log("Found URL argument: " + args[i]);
             break;
         }
     }
 
+    // Debug:
     // Logger::log("Sending IPC message: " + message);
     socket.write(message.toUtf8());
     socket.flush();
@@ -61,9 +63,10 @@ void IpcManager::start() {
         connect(s, &QLocalSocket::readyRead, this, [=] {
             QByteArray data = s->readAll();
             QString message = QString::fromUtf8(data);
+            // Debug:
             // Logger::log("IPC message received: " + message);
 
-            QStringList parts = message.split('|');
+            QStringList parts = message.split('|'); // split using '|'
             if (!parts.isEmpty() && parts[0] == "raise") {
                 emit raiseRequested();
                 if (parts.size() > 1) {

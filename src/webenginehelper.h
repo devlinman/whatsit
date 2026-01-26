@@ -24,7 +24,6 @@ private slots:
     void handleDownloadRequested(QWebEngineDownloadRequest *download);
 
 private:
-    // void applyTheme();
     QWebEngineView *m_view;
     QWebEngineProfile *m_profile;
     ConfigManager *m_config;

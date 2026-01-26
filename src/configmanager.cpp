@@ -27,7 +27,6 @@ ConfigManager::ConfigManager() {
 void ConfigManager::load() {
     Logger::log("Loading configuration...");
     // --- Boolean schema ---
-    // loadBool("General/PreferDarkMode", false);
     loadBool("General/RememberDownloadPaths", true);
 
     loadBool("Window/MaximizedByDefault", false);
@@ -75,10 +74,6 @@ void ConfigManager::sync() {
 }
 
 // ---------------- Getters ----------------
-
-// bool ConfigManager::preferDarkMode() const {
-//     return boolValue("General/PreferDarkMode");
-// }
 
 bool ConfigManager::rememberDownloadPaths() const {
     return boolValue("General/RememberDownloadPaths");
@@ -188,10 +183,6 @@ void ConfigManager::removeCustomConfig() {
 }
 
 // ---------------- Setters ----------------
-
-// void ConfigManager::setPreferDarkMode(bool v) {
-//     setBoolValue("General/PreferDarkMode", v);
-// }
 
 void ConfigManager::setRememberDownloadPaths(bool v) {
     setBoolValue("General/RememberDownloadPaths", v);

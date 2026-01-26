@@ -84,6 +84,7 @@ yay -S whatsit-git
 + [ ] Notifcations via freedesktop.
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
 + [ ] RSS <-> PSS memory estimation method option??
++ [ ] Titlebar Menu icons & checkboxes in hyprland...
 
 * LICENSES
 + This project (binary/source code) is licensed under the MIT license, compliant with the third-party licenses mentioned below.

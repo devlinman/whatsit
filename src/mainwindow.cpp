@@ -154,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent)
     QStringList args = QCoreApplication::arguments();
     for (int i = 1; i < args.size(); ++i) {
         if (args[i].startsWith("http") || args[i].startsWith("whatsapp")) {
+            // Debug:
             // Logger::log("Processing URL override from command line: " +
             // args[i]);
             Logger::log("Processing URL override from command line...");
@@ -199,7 +200,7 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
     if (finalUrl.host() == "web.whatsapp.com") {
         QString path = finalUrl.path();
         if (path == "/" || path.isEmpty()) {
-            Logger::log("Base URL requested. only focus window.");
+            Logger::log("Base URL requested. Only focus window.");
             return;
         }
 
@@ -208,16 +209,18 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
             QUrlQuery query(finalUrl);
             if (query.hasQueryItem("text")) {
                 QString text = query.queryItemValue("text");
-                // Log text parameter
+                // Debug: Log text parameter
                 // Logger::log("Send intent detected. Text: " + text);
             } else {
+                // Debug:
                 // Logger::log("Send intent missing 'text' parameter.");
             }
 
             sendMessageURL = finalUrl;
+            // Debug:
             // Logger::log("Stored sendMessageURL: " +
             // sendMessageURL.toString());
-            Logger::log("recieved valid sendMessageURL");
+            Logger::log("Recieved valid sendMessageURL");
 
             view->load(sendMessageURL);
 
@@ -286,8 +289,7 @@ void MainWindow::updateMemoryState() {
             view->setUrl(QUrl("about:blank"));
         }
     } else {
-        // If visible OR memory optimization is OFF, ensure we have the correct
-        // page
+        // If visible OR memory optimization is OFF, ensure we have the correct page
         if (view->url().toString() == "about:blank") {
             Logger::log("Use Less Memory: Restoring content");
             if (sendMessageURL.isValid()) {
@@ -456,18 +458,6 @@ void MainWindow::setupMenus() {
     });
 
     // --- General ---
-    // auto *dark = general->addAction("Prefer Dark Mode");
-    // this->addAction(dark);
-    // dark->setCheckable(true);
-    // dark->setChecked(config.preferDarkMode());
-    // connect(dark, &QAction::toggled, [&](bool v) {
-    //     Logger::log(QString("User toggled Prefer Dark Mode to: %1")
-    //                     .arg(v ? "ENABLED" : "DISABLED"));
-    //     config.setPreferDarkMode(v);
-    //     QProcess::startDetached(qApp->applicationFilePath());
-    //     qApp->quit();
-    // });
-
     auto *rememberDl = general->addAction(
         QIcon::fromTheme("download"),
         "Remember subsequent Download paths");
@@ -590,7 +580,7 @@ void MainWindow::setupMenus() {
     connect(memKill, &QAction::triggered, [this] {
         QDialog dlg(this);
         dlg.setWindowTitle("Memory Kill Switch");
-        dlg.setMinimumSize(400, 200);
+        dlg.setMinimumSize(600, 300);
         auto *layout = new QVBoxLayout(&dlg);
 
         auto *label = new QLabel("Threshold (1GB - 4GB):", &dlg);
@@ -742,6 +732,13 @@ void MainWindow::setupMenus() {
         layout->addRow("App URL:", urlEdit);
         layout->addRow("Tray Icon:", trayIconBtn);
         layout->addRow("App Icon:", appIconBtn);
+        // Push buttons to bottom
+        layout->addItem(new QSpacerItem(
+            0, 0,
+            QSizePolicy::Minimum,
+            QSizePolicy::Expanding
+        ));
+
         layout->addRow(btns);
 
         connect(saveBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
