@@ -85,10 +85,13 @@ yay -S whatsit-git
 + [ ] Command-line info - =version=, =help= =show/hide=, etc.
 + [ ] RSS <-> PSS memory estimation method option??
 + [ ] Titlebar Menu icons & checkboxes in hyprland...
++ [ ] Remember 'Download Paths' key/value in config, previous download path.
++ [ ] share sheet
+
 
 * LICENSES
 + This project (binary/source code) is licensed under the MIT license, compliant with the third-party licenses mentioned below.
-+ Check Licensing information at [[./LICENSES/LICENSE][LICENSE]].
++ Check Licensing information at [[./LICENSE][LICENSE]].
 + *Copyright Disclaimer: Whatsapp is not owned by me.*
 + The [[./resources/][icons]] used in this project were grabbed off the internet.
 
@@ -99,17 +102,13 @@ yay -S whatsit-git
 *** Third-Party Licenses
 
 + This project uses the Qt framework (Qt6), including QtWebEngine, by dynamically linking against them.
+ *Links*: [[https://code.qt.io/][Qt Source code]], [[https://download.qt.io/][Qt Downloads]].
 
 + Check [[./LICENSES/Qt-NOTICE.txt][Qt NOTICE]] for more information. Qt is licensed under the GNU Lesser General Public License v3 ([[./LICENSES/LGPL-3.0.txt][LGPL v3]]).
 
 + Check your Qt licensing using a command like this.
-
-  #+begin_src shell
+#+begin_src shell
 $ pacman -Qi qt6-webengine | grep License -A1
 Licenses        : GPL-3.0-only  LGPL-3.0-only  LicenseRef-Qt-Commercial  Qt-GPL-exception-1.0
 Groups          : qt6
-  #+end_src
-
-+ Qt source code is available from:
-https://code.qt.io/
-https://download.qt.io/
+#+end_src

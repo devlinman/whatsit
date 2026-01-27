@@ -544,7 +544,7 @@ void MainWindow::setupMenus() {
     connect(notifications, &QAction::toggled,
             [&](bool v) { config.setSystemNotifications(v); });
 
-    auto *mute = system->addAction("Mute notification sounds");
+    auto *mute = system->addAction("Mute Sounds");
     this->addAction(mute);
     mute->setCheckable(true);
     mute->setChecked(config.muteAudio());
