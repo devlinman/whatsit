@@ -10,7 +10,7 @@ static constexpr const char *IPC_NAME = "whatsit-ipc";
 
 IpcManager::IpcManager(QObject *parent) : QObject(parent) {}
 
-bool IpcManager::notifyExistingInstance() {
+bool IpcManager::notifyExistingInstance(const QString &command) {
     Logger::log("Checking for existing instance...");
 
     QStringList args = QCoreApplication::arguments();
@@ -29,23 +29,28 @@ bool IpcManager::notifyExistingInstance() {
 
     Logger::log("Existing instance found.");
 
-    QString message = "raise";
+    QString message = command;
+    bool hasUrl = false;
 
     // Check for URL argument
     for (int i = 1; i < args.size(); ++i) {
         if (args[i].startsWith("http") || args[i].startsWith("whatsapp")) {
             message += "|" + args[i];
+            hasUrl = true;
             // Debug:
             // Logger::log("Found URL argument: " + args[i]);
             break;
         }
     }
 
-    // Debug:
-    // Logger::log("Sending IPC message: " + message);
-    socket.write(message.toUtf8());
-    socket.flush();
-    socket.waitForBytesWritten(100);
+    if (command == "raise" || command == "hide" || hasUrl) {
+        // Debug:
+        // Logger::log("Sending IPC message: " + message);
+        socket.write(message.toUtf8());
+        socket.flush();
+        socket.waitForBytesWritten(100);
+    }
+    
     socket.disconnectFromServer();
 
     return true;
@@ -67,8 +72,14 @@ void IpcManager::start() {
             // Logger::log("IPC message received: " + message);
 
             QStringList parts = message.split('|'); // split using '|'
-            if (!parts.isEmpty() && parts[0] == "raise") {
-                emit raiseRequested();
+            if (!parts.isEmpty()) {
+                QString cmd = parts[0];
+                if (cmd == "raise") {
+                    emit raiseRequested();
+                } else if (cmd == "hide") {
+                    emit hideRequested();
+                }
+
                 if (parts.size() > 1) {
                     QUrl url(parts[1]);
                     if (url.isValid()) {

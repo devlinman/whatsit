@@ -124,6 +124,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ipc = new IpcManager(this);
     connect(ipc, &IpcManager::raiseRequested, this, &MainWindow::showAndRaise);
+    connect(ipc, &IpcManager::hideRequested, this, &MainWindow::hide);
     connect(ipc, &IpcManager::openUrlRequested, this,
             &MainWindow::handleIncomingUrl);
     ipc->start();

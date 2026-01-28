@@ -15,10 +15,11 @@ public:
 
     // Client-side helper:
     // returns true if another instance was found and notified
-    static bool notifyExistingInstance();
+    static bool notifyExistingInstance(const QString &command = "raise");
 
 signals:
     void raiseRequested();
+    void hideRequested();
     void openUrlRequested(const QUrl &url);
 
 private:

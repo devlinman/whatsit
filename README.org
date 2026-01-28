@@ -40,6 +40,10 @@
 + It contains important information about the working of the app.
 + It is recommended to have a look.
 
+*** Discussions
++ Join the discussions on github to discuss new features, future directions, etc.
++ [[https://github.com/devlinman/whatsit/discussions][Discussions]]
+
 * Improvements in v 4.0.x
 *** MAJOR REGRESSION
 + Dark mode was already properly implemented by  whatsapp web itself. No need to confuse users further with JS injection.
@@ -82,7 +86,7 @@ yay -S whatsit-git
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
 + [ ] Notifcations via freedesktop.
-+ [ ] Command-line info - =version=, =help= =show/hide=, etc.
++ [X] Command-line info - =version=, =help= =show/hide=, etc.
 + [ ] RSS <-> PSS memory estimation method option??
 + [ ] Titlebar Menu icons & checkboxes in hyprland...
 + [ ] Remember 'Download Paths' key/value in config, previous download path.
@@ -96,8 +100,8 @@ yay -S whatsit-git
 + The [[./resources/][icons]] used in this project were grabbed off the internet.
 
 **** tldr;
-**** Use this app at your own risk.
-**** I will not be liable for any damages.
++ Use this app at your own risk.
++ I will not be liable for any damages.
 
 *** Third-Party Licenses
 
