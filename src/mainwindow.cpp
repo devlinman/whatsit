@@ -23,11 +23,15 @@
 #include <QVBoxLayout>
 #include <cmath>
 #include <unistd.h>
+#include <QColor>
+#include <QWebEnginePage>
 
 #include "logger.h"
 
 static constexpr int DEFAULT_W = 1200;
 static constexpr int DEFAULT_H = 800;
+// <html><body style="background-color: #1e1e1e;"></body></html>
+static const QUrl DARK_BLANK_URL("data:text/html;base64,PGh0bWw+PGJvZHkgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICMxZTFlMWU7Ij48L2JvZHk+PC9odG1sPg==");
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), view(new QWebEngineView(this)), web(nullptr),
@@ -55,6 +59,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     web = new WebEngineHelper(view, &config, this);
     web->initialize();
+    
+    // Set background color to dark to prevent flashbangs
+    if (view->page()) {
+        view->page()->setBackgroundColor(QColor("#1e1e1e"));
+    }
 
     // Set initial zoom level
     view->setZoomFactor(config.zoomLevel());
@@ -144,7 +153,7 @@ MainWindow::MainWindow(QWidget *parent)
     if (config.useLessMemory() && config.startMinimizedInTray()) {
         Logger::log("Low-memory startup: Delaying load of " +
                     targetUrl.toString());
-        view->setUrl(QUrl("about:blank"));
+        view->setUrl(DARK_BLANK_URL);
     } else {
         Logger::log("Loading URL: " + targetUrl.toString());
         view->load(targetUrl);
@@ -283,14 +292,14 @@ void MainWindow::updateMemoryState() {
 
     if (config.useLessMemory() && !isVisible()) {
         // If hidden and memory optimization is ON, unload the page
-        if (view->url().toString() != "about:blank") {
-            Logger::log("Use Less Memory: Unloading content to about:blank");
+        if (view->url() != DARK_BLANK_URL && view->url().toString() != "about:blank") {
+            Logger::log("Use Less Memory: Unloading content to dark blank page");
             view->stop(); // Stop any pending loads
-            view->setUrl(QUrl("about:blank"));
+            view->setUrl(DARK_BLANK_URL);
         }
     } else {
         // If visible OR memory optimization is OFF, ensure we have the correct page
-        if (view->url().toString() == "about:blank") {
+        if (view->url().toString() == "about:blank" || view->url() == DARK_BLANK_URL) {
             Logger::log("Use Less Memory: Restoring content");
             if (sendMessageURL.isValid()) {
                 view->setUrl(sendMessageURL);
