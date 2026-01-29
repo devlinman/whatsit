@@ -5,7 +5,7 @@
 * Contents :TOC_1:
 - [[#about-whatsit][About Whatsit]]
 - [[#wiki--documentation][Wiki & Documentation]]
-- [[#improvements-in-v-40x][Improvements in v 4.0.x]]
+- [[#improvements-in-v-410][Improvements in v 4.1.0]]
 - [[#install][Install]]
 - [[#future-updates][Future updates]]
 - [[#licenses][LICENSES]]
@@ -44,32 +44,11 @@
 + Join the discussions on github to discuss new features, future directions, etc.
 + [[https://github.com/devlinman/whatsit/discussions][Discussions]]
 
-* Improvements in v 4.0.x
-*** MAJOR REGRESSION
-+ Dark mode was already properly implemented by  whatsapp web itself. No need to confuse users further with JS injection.
-+ *Regression: ALL (Including Dark Mode) JS injection is removed.*
-+ Titlebar menu option and Config file key value are also removed as well.
+* Improvements in v 4.1.0
++ When restored from tray icon, NO flash of a blank white page (/flashbang/).
++ Command-line Arguments: =show=, =hide=, =help=.
++ =whatsit help= will display the usage info.
 
-+ The app is more secure now (Not that it wasn't before...), offering a more vanilla experience.
-
-+ Dark Mode can be directly enabled from whatsapp settings, and that setting is persistent anyway.
-
-+ If any problem occurs, use =Reload Config and Cache= option. If problem persists, start an issue on github.
-
-+ You are free, and you are also encouraged to examine the source code to verify the security of the app.
-  Essentially, User data (private messages) must not be exposed, unless for debugging purposes in dev-builds.
-
-+ The code is commented out for reference, and it will be removed in next minor update.
-
-+ If you want to examine the changes, go through the corresponding commit. In particular, check =webenginehelper.cpp= for changes regarding JS.
-
-*** Qt Licensing
-+ Added 3rd party licenses. check the LICENSES section below.
-
-*** Icons
-+ Added icons for titlebar menu buttons.
-*** Tray icon in Hyprland (v4.0.1)
-+ =Tray icon is not visible in waybar with hyprland=: closed. Tray manager updated. It now works on hyprland.
 
 * Install
 ** Install From AUR
@@ -86,10 +65,9 @@ yay -S whatsit-git
 * TODO Future updates
 + [ ] Delete debug file on app/profile change.
 + [ ] Notifcations via freedesktop.
-+ [X] Command-line info - =version=, =help= =show/hide=, etc.
 + [ ] RSS <-> PSS memory estimation method option??
 + [ ] Titlebar Menu icons & checkboxes in hyprland...
-+ [ ] Remember 'Download Paths' key/value in config, previous download path.
++ [ ] Remember 'Download Path' key/value in config, previous download path, Auto-download path?.
 + [ ] share sheet
 
 
