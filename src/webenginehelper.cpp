@@ -3,15 +3,13 @@
 #include "configmanager.h"
 #include "logger.h"
 
+#include <QWebEngineView>
 #include <QWebEnginePage>
 #include <QWebEngineProfile>
 #include <QWebEnginePermission>
 #include <QWebEngineNotification>
 #include <KNotification>
-#include <QWebEngineScript>
-#include <QWebEngineScriptCollection>
 #include <QWebEngineDownloadRequest>
-#include <QWebChannel>
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QDir>
@@ -19,6 +17,10 @@
 #include <QFileInfo>
 
 namespace {
+
+    const QString DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) "
+                                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                       "Chrome/120.0.0.0 Safari/537.36";
 
     class WhatsitPage : public QWebEnginePage
     {
@@ -106,11 +108,7 @@ void WebEngineHelper::initialize()
 
     m_profile = new QWebEngineProfile("whatsit-profile", this);
 
-    m_profile->setHttpUserAgent(
-        "Mozilla/5.0 (X11; Linux x86_64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    );
+    m_profile->setHttpUserAgent(DEFAULT_USER_AGENT);
 
     m_profile->setPersistentStoragePath(dataPath);
     m_profile->setCachePath(cachePath);

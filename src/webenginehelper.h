@@ -2,10 +2,10 @@
 #pragma once
 
 #include <QObject>
-#include <QWebEngineView>
-#include <QWebEngineProfile>
 
 class ConfigManager;
+class QWebEngineView;
+class QWebEngineProfile;
 class QWebEngineDownloadRequest;
 
 class WebEngineHelper : public QObject

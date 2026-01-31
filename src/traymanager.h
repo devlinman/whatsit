@@ -2,7 +2,8 @@
 #pragma once
 
 #include <QObject>
-#include <KStatusNotifierItem>
+
+class KStatusNotifierItem;
 
 class TrayManager : public QObject
 {

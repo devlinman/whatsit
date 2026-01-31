@@ -1,5 +1,6 @@
 // traymanager.cpp
 #include "traymanager.h"
+#include <KStatusNotifierItem>
 #include <QMenu>
 
 TrayManager::TrayManager(QObject *parent)

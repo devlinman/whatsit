@@ -6,7 +6,6 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QDir>
-#include <QFileDialog>
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -24,9 +23,11 @@
 #include <cmath>
 #include <unistd.h>
 #include <QColor>
-#include <QWebEnginePage>
-
+#include <QWebEngineView>
 #include "logger.h"
+#include "ipcmanager.h"
+#include "traymanager.h"
+#include "webenginehelper.h"
 
 static constexpr int DEFAULT_W = 1200;
 static constexpr int DEFAULT_H = 800;
@@ -413,12 +414,16 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
 }
 
 void MainWindow::rebuildKCache() {
-    const QString kbuild = QStandardPaths::findExecutable("kbuildsyscoca6");
+    QString kbuild = QStandardPaths::findExecutable("kbuildsycoca6");
+    if (kbuild.isEmpty()) {
+        kbuild = QStandardPaths::findExecutable("kbuildsycoca5");
+    }
+
     if (!kbuild.isEmpty()) {
-        Logger::log("Triggering kbuildsyscoca6 to update icon cache...");
+        Logger::log("Triggering " + kbuild + " to update icon cache...");
         QProcess::startDetached(kbuild);
     } else {
-        Logger::log("kbuildsyscoca6 not found; skipping cache rebuild.");
+        Logger::log("kbuildsycoca6/5 not found; skipping cache rebuild.");
         return;
     }
 }

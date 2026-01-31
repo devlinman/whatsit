@@ -2,12 +2,14 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QWebEngineView>
-
+#include <QUrl>
 #include "configmanager.h"
-#include "ipcmanager.h"
-#include "traymanager.h"
-#include "webenginehelper.h"
+
+class QWebEngineView;
+class WebEngineHelper;
+class TrayManager;
+class IpcManager;
+class QTimer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
