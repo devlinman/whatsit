@@ -1,9 +1,24 @@
 <img align="left" src="./pics/logo.png" alt="Whatsit Logo" width="140">
-<h1 align="center">Mr. Whatsit</h1>
-<p align="center"> <sub><span style="color: gray;">From <i>Stranger Things</i> S5</span><sub></p>
+<p align="center">
+  <!-- Core Tech -->
+  <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Qt-41CD52?style=for-the-badge&logo=qt&logoColor=white"/>
+
+  <!-- OS -->
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Arch_Linux-1793D1?style=for-the-badge&logo=arch-linux&logoColor=white"/>
+
+  <!-- Desktop / Environment -->
+  <img src="https://img.shields.io/badge/KDE-1D99F3?style=for-the-badge&logo=kde&logoColor=white"/>
+
+  <!-- Extras -->
+<img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative&logoColor=white"/>
+
+<!--Start--->
+<br>
+<h1 align="center">Mr. Whatsit</h1> <p align="center"> <sub><span style="color: gray;">From <i>Stranger Things</i> S5</span><sub></p>
 
 **Author:** _devlinman_
-
 ## About Whatsit
 
 - A lightweight, native desktop client for WhatsApp Web built with `Qt 6` and `Qt WebEngine`, and is **NOT** Electron-based.
