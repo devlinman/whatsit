@@ -13,6 +13,8 @@ public:
 
     void initialize();
     void setIcon(const QString &iconName);
+    void setUnreadIndicator(bool show);
+    void setIndicatorEnabled(bool enabled);
 
 signals:
     void showRequested();
@@ -20,5 +22,10 @@ signals:
     void activated();
 
 private:
+    void updateIcon();
+
     KStatusNotifierItem *tray;
+    QString m_currentIconName;
+    bool m_showUnreadIndicator = false;
+    bool m_indicatorEnabled = true;
 };

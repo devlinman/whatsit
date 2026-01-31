@@ -44,6 +44,7 @@ void ConfigManager::load() {
 
     loadBool("System/AutostartOnLogin", false);
     loadBool("System/StartMinimizedInTray", false);
+    loadBool("System/ShowTrayIndicator", true);
     loadBool("System/SystemNotifications", true);
     loadBool("System/MuteAudio", false);
 
@@ -52,6 +53,8 @@ void ConfigManager::load() {
     QSettings settings_adv(m_configPath, QSettings::IniFormat);
     int memLimit = settings_adv.value("Advanced/MemoryLimit", 0).toInt();
     m_memoryLimit = memLimit;
+
+    m_backgroundCheckInterval = settings_adv.value("Advanced/BackgroundCheckInterval", 0).toInt();
 
     loadBool("Debug/EnableFileLogging", false);
 
@@ -111,6 +114,10 @@ bool ConfigManager::startMinimizedInTray() const {
     return boolValue("System/StartMinimizedInTray");
 }
 
+bool ConfigManager::showTrayIndicator() const {
+    return boolValue("System/ShowTrayIndicator");
+}
+
 bool ConfigManager::systemNotifications() const {
     return boolValue("System/SystemNotifications");
 }
@@ -122,6 +129,10 @@ bool ConfigManager::useLessMemory() const {
 }
 
 int ConfigManager::memoryLimit() const { return m_memoryLimit; }
+
+int ConfigManager::backgroundCheckInterval() const {
+    return m_backgroundCheckInterval;
+}
 
 bool ConfigManager::debugLoggingEnabled() const {
     return boolValue("Debug/EnableFileLogging");
@@ -220,6 +231,10 @@ void ConfigManager::setStartMinimizedInTray(bool v) {
     setBoolValue("System/StartMinimizedInTray", v);
 }
 
+void ConfigManager::setShowTrayIndicator(bool v) {
+    setBoolValue("System/ShowTrayIndicator", v);
+}
+
 void ConfigManager::setSystemNotifications(bool v) {
     setBoolValue("System/SystemNotifications", v);
 }
@@ -236,6 +251,12 @@ void ConfigManager::setMemoryLimit(int limit) {
     m_memoryLimit = limit;
     QSettings(m_configPath, QSettings::IniFormat)
         .setValue("Advanced/MemoryLimit", limit);
+}
+
+void ConfigManager::setBackgroundCheckInterval(int interval) {
+    m_backgroundCheckInterval = interval;
+    QSettings(m_configPath, QSettings::IniFormat)
+        .setValue("Advanced/BackgroundCheckInterval", interval);
 }
 
 void ConfigManager::setDebugLoggingEnabled(bool v) {

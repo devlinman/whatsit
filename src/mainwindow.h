@@ -27,13 +27,18 @@ class MainWindow : public QMainWindow {
     void checkMemoryUsage();
     void handleIncomingUrl(const QUrl &url);
     void clearSendMessageUrl();
+    void handleMessageDetected();
+    void handleUnreadChanged(bool hasUnread);
+    void startPeriodicCheck();
+    void performPeriodicCheck();
+    void finishPeriodicCheck();
 
   private:
     void setupMenus();
     void ensureDesktopFile(const QString &iconPath);
     void rebuildKCache();
     void handleExitRequest();
-    void updateMemoryState();
+    void updateMemoryState(bool forceLoad = false);
     QUrl getTargetUrl() const;
 
     // unified tray/window behavior
@@ -47,4 +52,8 @@ class MainWindow : public QMainWindow {
     TrayManager *tray;
     IpcManager *ipc;
     QTimer *memoryTimer;
+    QTimer *periodicCheckTimer;
+    QTimer *activeCheckTimer;
+    bool m_hasUnread = false;
+    bool m_isCheckingInMenu = false;
 };

@@ -20,8 +20,14 @@ public:
     QWebEngineProfile *profile() const;
     void setAudioMuted(bool muted);
 
+signals:
+    void notificationReceived();
+    void unreadChanged(bool hasUnread);
+    void activationRequested();
+
 private slots:
     void handleDownloadRequested(QWebEngineDownloadRequest *download);
+    void handleTitleChanged(const QString &title);
 
 private:
     QWebEngineView *m_view;

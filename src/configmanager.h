@@ -25,12 +25,14 @@ class ConfigManager {
     bool autostartOnLogin() const;
     bool minimizeToTray() const;
     bool startMinimizedInTray() const;
+    bool showTrayIndicator() const;
     bool systemNotifications() const;
     bool muteAudio() const;
 
     // --- Advanced ---
     bool useLessMemory() const;
     int memoryLimit() const;
+    int backgroundCheckInterval() const;
 
     // Debug
     bool debugLoggingEnabled() const;
@@ -61,12 +63,14 @@ class ConfigManager {
     void setAutostartOnLogin(bool);
     void setMinimizeToTray(bool);
     void setStartMinimizedInTray(bool);
+    void setShowTrayIndicator(bool);
     void setSystemNotifications(bool);
     void setMuteAudio(bool);
 
     // --- Advanced ---
     void setUseLessMemory(bool);
     void setMemoryLimit(int);
+    void setBackgroundCheckInterval(int);
 
     // Debug
     void setDebugLoggingEnabled(bool);
@@ -80,6 +84,7 @@ class ConfigManager {
     QString m_configPath;
 
     int m_memoryLimit = 0;
+    int m_backgroundCheckInterval = 0;
 
     // Centralized boolean storage
     QMap<QString, bool> m_boolValues;
