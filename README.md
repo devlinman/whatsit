@@ -43,7 +43,7 @@
 - Tray icon indicator for new messages 
 
 ---
-# Screenshots
+## Screenshots
 <p align="center">
   <img src="./pics/pic1.png" alt="Screenshot 1" width="700">
 </p>
