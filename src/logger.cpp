@@ -41,3 +41,19 @@ bool Logger::isFileLoggingEnabled()
     return s_fileLoggingEnabled;
 }
 
+void Logger::deleteLogFile()
+{
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + "/whatsit";
+    QString logPath = cacheDir + "/whatsit.log";
+    
+    QFile file(logPath);
+    if (file.exists()) {
+        std::cout << "Deleting log file: " << logPath.toStdString() << std::endl;
+        if (file.remove()) {
+             std::cout << "Log file deleted successfully." << std::endl;
+        } else {
+             std::cout << "Failed to delete log file." << std::endl;
+        }
+    }
+}
+

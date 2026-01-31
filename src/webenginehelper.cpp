@@ -3,15 +3,13 @@
 #include "configmanager.h"
 #include "logger.h"
 
+#include <QWebEngineView>
 #include <QWebEnginePage>
 #include <QWebEngineProfile>
 #include <QWebEnginePermission>
 #include <QWebEngineNotification>
 #include <KNotification>
-#include <QWebEngineScript>
-#include <QWebEngineScriptCollection>
 #include <QWebEngineDownloadRequest>
-#include <QWebChannel>
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QDir>
@@ -19,6 +17,10 @@
 #include <QFileInfo>
 
 namespace {
+
+    const QString DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) "
+                                       "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                       "Chrome/120.0.0.0 Safari/537.36";
 
     class WhatsitPage : public QWebEnginePage
     {
@@ -106,11 +108,7 @@ void WebEngineHelper::initialize()
 
     m_profile = new QWebEngineProfile("whatsit-profile", this);
 
-    m_profile->setHttpUserAgent(
-        "Mozilla/5.0 (X11; Linux x86_64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    );
+    m_profile->setHttpUserAgent(DEFAULT_USER_AGENT);
 
     m_profile->setPersistentStoragePath(dataPath);
     m_profile->setCachePath(cachePath);
@@ -157,17 +155,8 @@ void WebEngineHelper::initialize()
         
         // Handle click: Activate window AND tell WebEngine
         QObject::connect(defaultAction, &KNotificationAction::activated, rawNotif, [this, rawNotif]() {
-            Logger::log("WebEngineHelper: Notification clicked. Activating window.");
-            if (m_view && m_view->window()) {
-                QWidget *win = m_view->window();
-                if (win->isMinimized()) {
-                    win->showNormal();
-                } else {
-                    win->show();
-                }
-                win->raise();
-                win->activateWindow();
-            }
+            Logger::log("WebEngineHelper: Notification clicked. Requesting activation.");
+            emit activationRequested();
             rawNotif->click();
         });
 
@@ -179,10 +168,14 @@ void WebEngineHelper::initialize()
         rawNotif->show();
         knotify->sendEvent();
         Logger::log("WebEngineHelper: Notification displayed.");
+
+        emit notificationReceived();
     });
 
     auto *page = new WhatsitPage(m_profile, m_view);
     m_view->setPage(page);
+
+    connect(m_view, &QWebEngineView::titleChanged, this, &WebEngineHelper::handleTitleChanged);
 
     connect(page, &QWebEnginePage::permissionRequested,
             page, [page](QWebEnginePermission permission) {
@@ -198,6 +191,13 @@ void WebEngineHelper::initialize()
     });
 
     setAudioMuted(m_config->muteAudio());
+}
+
+void WebEngineHelper::handleTitleChanged(const QString &title)
+{
+    // WhatsApp unread titles usually look like "(1) WhatsApp" or similar
+    bool hasUnread = title.contains('(') && title.contains(')');
+    emit unreadChanged(hasUnread);
 }
 
 void WebEngineHelper::setAudioMuted(bool muted)

@@ -2,12 +2,14 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QWebEngineView>
-
+#include <QUrl>
 #include "configmanager.h"
-#include "ipcmanager.h"
-#include "traymanager.h"
-#include "webenginehelper.h"
+
+class QWebEngineView;
+class WebEngineHelper;
+class TrayManager;
+class IpcManager;
+class QTimer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -20,18 +22,24 @@ class MainWindow : public QMainWindow {
     void closeEvent(QCloseEvent *event) override;
     void hideEvent(QHideEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
   private slots:
     void checkMemoryUsage();
     void handleIncomingUrl(const QUrl &url);
     void clearSendMessageUrl();
+    void handleMessageDetected();
+    void handleUnreadChanged(bool hasUnread);
+    void startPeriodicCheck();
+    void performPeriodicCheck();
+    void finishPeriodicCheck();
 
   private:
     void setupMenus();
     void ensureDesktopFile(const QString &iconPath);
     void rebuildKCache();
     void handleExitRequest();
-    void updateMemoryState();
+    void updateMemoryState(bool forceLoad = false);
     QUrl getTargetUrl() const;
 
     // unified tray/window behavior
@@ -45,4 +53,8 @@ class MainWindow : public QMainWindow {
     TrayManager *tray;
     IpcManager *ipc;
     QTimer *memoryTimer;
+    QTimer *periodicCheckTimer;
+    QTimer *activeCheckTimer;
+    bool m_hasUnread = false;
+    bool m_isCheckingInMenu = false;
 };

@@ -3,15 +3,16 @@
 
 #include <KIconDialog>
 #include <KIconLoader>
+#include <KNotification>
 #include <QCloseEvent>
 #include <QDialog>
 #include <QDir>
-#include <QFileDialog>
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QCheckBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QShortcut>
@@ -24,9 +25,11 @@
 #include <cmath>
 #include <unistd.h>
 #include <QColor>
-#include <QWebEnginePage>
-
+#include <QWebEngineView>
 #include "logger.h"
+#include "ipcmanager.h"
+#include "traymanager.h"
+#include "webenginehelper.h"
 
 static constexpr int DEFAULT_W = 1200;
 static constexpr int DEFAULT_H = 800;
@@ -70,6 +73,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     tray = new TrayManager(this);
     tray->initialize();
+    tray->setIndicatorEnabled(config.showTrayIndicator());
+    tray->setTooltipEnabled(config.showTrayTooltip());
+
+    connect(web, &WebEngineHelper::notificationReceived, this, &MainWindow::handleMessageDetected);
+    connect(web, &WebEngineHelper::unreadChanged, this, &MainWindow::handleUnreadChanged);
+    connect(web, &WebEngineHelper::activationRequested, this, &MainWindow::showAndRaise);
 
     QString trayIconToUse = "whatsit";
     QString appIconToUse = "whatsit";
@@ -135,6 +144,13 @@ MainWindow::MainWindow(QWidget *parent)
         memoryTimer->start(30000); // Check every 30 seconds
     }
 
+    periodicCheckTimer = new QTimer(this);
+    connect(periodicCheckTimer, &QTimer::timeout, this, &MainWindow::startPeriodicCheck);
+
+    activeCheckTimer = new QTimer(this);
+    activeCheckTimer->setSingleShot(true);
+    connect(activeCheckTimer, &QTimer::timeout, this, &MainWindow::finishPeriodicCheck);
+
     auto *quitShortcut = new QShortcut(QKeySequence::Quit, this);
     quitShortcut->setContext(Qt::ApplicationShortcut);
     connect(quitShortcut, &QShortcut::activated, this,
@@ -155,8 +171,14 @@ MainWindow::MainWindow(QWidget *parent)
         Logger::log("Low-memory startup: Delaying load of " +
                     targetUrl.toString());
         view->setUrl(DARK_BLANK_URL);
+
+        int interval = config.backgroundCheckInterval();
+        if (interval > 0) {
+            Logger::log(QString("Starting periodic check timer (Startup): %1 minutes").arg(interval));
+            periodicCheckTimer->start(interval * 60 * 1000);
+        }
     } else {
-        Logger::log("Loading URL: " + targetUrl.toString());
+        Logger::log("Startup load: " + targetUrl.toString());
         view->load(targetUrl);
     }
 
@@ -249,6 +271,51 @@ void MainWindow::showAndRaise() {
     show();
     raise();
     activateWindow();
+
+    m_hasUnread = false;
+    tray->setUnreadIndicator(false);
+}
+
+void MainWindow::handleMessageDetected() {
+    if (!isActiveWindow() || isMinimized() || !isVisible()) {
+        m_hasUnread = true;
+        tray->setUnreadIndicator(true);
+    }
+}
+
+void MainWindow::handleUnreadChanged(bool hasUnread) {
+    if (hasUnread && (!isActiveWindow() || isMinimized() || !isVisible())) {
+        m_hasUnread = true;
+        tray->setUnreadIndicator(true);
+    }
+}
+
+void MainWindow::startPeriodicCheck() {
+    if (!config.useLessMemory() || isVisible()) {
+        periodicCheckTimer->stop();
+        return;
+    }
+
+    int interval = config.backgroundCheckInterval();
+    if (interval > 0) {
+        Logger::log("Auto-waking up for background check...");
+        performPeriodicCheck();
+    } else {
+        periodicCheckTimer->stop();
+    }
+}
+
+void MainWindow::performPeriodicCheck() {
+    Logger::log("Periodic check: Loading in background for 30 seconds");
+    m_isCheckingInMenu = true;
+    updateMemoryState(true);
+    activeCheckTimer->start(30000); // 30 seconds
+}
+
+void MainWindow::finishPeriodicCheck() {
+    Logger::log("Periodic check: 30 seconds elapsed, unloading");
+    m_isCheckingInMenu = false;
+    updateMemoryState();
 }
 
 // SINGLE exit decision point
@@ -280,28 +347,57 @@ void MainWindow::hideEvent(QHideEvent *event) {
     QMainWindow::hideEvent(event);
     clearSendMessageUrl();
     updateMemoryState();
+
+    if (config.useLessMemory()) {
+        int interval = config.backgroundCheckInterval();
+        if (interval > 0) {
+            Logger::log(QString("Starting periodic check timer: %1 minutes").arg(interval));
+            periodicCheckTimer->start(interval * 60 * 1000);
+        }
+    }
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
     QMainWindow::showEvent(event);
     updateMemoryState();
+    periodicCheckTimer->stop();
+    activeCheckTimer->stop();
+
+    m_hasUnread = false;
+    if (tray) {
+        tray->setUnreadIndicator(false);
+    }
 }
 
-void MainWindow::updateMemoryState() {
+void MainWindow::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            m_hasUnread = false;
+            if (tray) {
+                tray->setUnreadIndicator(false);
+            }
+        }
+    }
+    QMainWindow::changeEvent(event);
+}
+
+void MainWindow::updateMemoryState(bool forceLoad) {
     if (!view)
         return;
 
-    if (config.useLessMemory() && !isVisible()) {
-        // If hidden and memory optimization is ON, unload the page
+    bool shouldBeLoaded = isVisible() || (config.useLessMemory() && forceLoad) || !config.useLessMemory();
+
+    if (!shouldBeLoaded) {
+        // If hidden and memory optimization is ON, and we aren't forcing a load for a check, unload
         if (view->url() != DARK_BLANK_URL && view->url().toString() != "about:blank") {
             Logger::log("Use Less Memory: Unloading content to dark blank page");
-            view->stop(); // Stop any pending loads
+            view->stop();
             view->setUrl(DARK_BLANK_URL);
         }
     } else {
-        // If visible OR memory optimization is OFF, ensure we have the correct page
+        // If visible OR memory optimization is OFF (or forced), ensure content is loaded
         if (view->url().toString() == "about:blank" || view->url() == DARK_BLANK_URL) {
-            Logger::log("Use Less Memory: Restoring content");
+            Logger::log("Memory State: Ensuring content is loaded");
             if (sendMessageURL.isValid()) {
                 view->setUrl(sendMessageURL);
             } else {
@@ -413,12 +509,16 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
 }
 
 void MainWindow::rebuildKCache() {
-    const QString kbuild = QStandardPaths::findExecutable("kbuildsyscoca6");
+    QString kbuild = QStandardPaths::findExecutable("kbuildsycoca6");
+    if (kbuild.isEmpty()) {
+        kbuild = QStandardPaths::findExecutable("kbuildsycoca5");
+    }
+
     if (!kbuild.isEmpty()) {
-        Logger::log("Triggering kbuildsyscoca6 to update icon cache...");
+        Logger::log("Triggering " + kbuild + " to update icon cache...");
         QProcess::startDetached(kbuild);
     } else {
-        Logger::log("kbuildsyscoca6 not found; skipping cache rebuild.");
+        Logger::log("kbuildsycoca6/5 not found; skipping cache rebuild.");
         return;
     }
 }
@@ -547,6 +647,15 @@ void MainWindow::setupMenus() {
     connect(startMin, &QAction::toggled,
             [&](bool v) { config.setStartMinimizedInTray(v); });
 
+    auto *trayInd = system->addAction("Show tray indicator");
+    this->addAction(trayInd);
+    trayInd->setCheckable(true);
+    trayInd->setChecked(config.showTrayIndicator());
+    connect(trayInd, &QAction::toggled, [&](bool v) {
+        config.setShowTrayIndicator(v);
+        tray->setIndicatorEnabled(v);
+    });
+
     auto *notifications = system->addAction("Enable Notifications");
     this->addAction(notifications);
     notifications->setCheckable(true);
@@ -572,6 +681,9 @@ void MainWindow::setupMenus() {
         config.setDebugLoggingEnabled(v);
         Logger::setFileLoggingEnabled(v);
         Logger::log(v ? "File logging ENABLED" : "File logging DISABLED");
+        if (!v) {
+            Logger::deleteLogFile();
+        }
     });
 
     auto *useLessMem = advanced->addAction("Use Less Memory");
@@ -581,6 +693,14 @@ void MainWindow::setupMenus() {
     connect(useLessMem, &QAction::toggled, [this](bool v) {
         config.setUseLessMemory(v);
         updateMemoryState();
+        if (v && !isVisible()) {
+            int interval = config.backgroundCheckInterval();
+            if (interval > 0)
+                periodicCheckTimer->start(interval * 60 * 1000);
+        } else {
+            periodicCheckTimer->stop();
+            activeCheckTimer->stop();
+        }
     });
 
     auto *memKill = advanced->addAction(
@@ -687,6 +807,25 @@ void MainWindow::setupMenus() {
         QString currentAppIcon = config.customAppIcon();
         QString selectedAppIcon = currentAppIcon;
 
+        auto *tooltipCheck = new QCheckBox("Show Tooltip", &dlg);
+        tooltipCheck->setChecked(config.showTrayTooltip());
+
+        auto *intervalSlider = new QSlider(Qt::Horizontal, &dlg);
+        intervalSlider->setRange(0, 5);
+        intervalSlider->setTickPosition(QSlider::TicksBelow);
+        intervalSlider->setTickInterval(1);
+        intervalSlider->setValue(config.backgroundCheckInterval());
+
+        auto *intervalLabel = new QLabel(&dlg);
+        auto updateIntervalLabel = [intervalLabel](int val) {
+            if (val == 0)
+                intervalLabel->setText("Background Check: Disabled");
+            else
+                intervalLabel->setText(QString("Background Check: Every %1 min\n(App wakes up, loads page, waits 30s, then sleeps)").arg(val));
+        };
+        updateIntervalLabel(intervalSlider->value());
+        connect(intervalSlider, &QSlider::valueChanged, updateIntervalLabel);
+
         if (!currentTrayIcon.isEmpty()) {
             trayIconBtn->setText(currentTrayIcon);
             QIcon tempIcon = QIcon::fromTheme(currentTrayIcon);
@@ -742,6 +881,12 @@ void MainWindow::setupMenus() {
         layout->addRow("App URL:", urlEdit);
         layout->addRow("Tray Icon:", trayIconBtn);
         layout->addRow("App Icon:", appIconBtn);
+        layout->addRow("Wake Up:", intervalLabel);
+        layout->addRow("", intervalSlider);
+        
+        layout->addItem(new QSpacerItem(0, 10, QSizePolicy::Minimum, QSizePolicy::Fixed));
+        layout->addRow("", tooltipCheck);
+
         // Push buttons to bottom
         layout->addItem(new QSpacerItem(
             0, 0,
@@ -756,6 +901,8 @@ void MainWindow::setupMenus() {
 
         connect(removeBtn, &QPushButton::clicked, [&] {
             config.removeCustomConfig();
+            config.setBackgroundCheckInterval(0); // Reset interval
+            config.setShowTrayTooltip(true); // Default
 
             // Immediately update the tray icon
             if (tray) {
@@ -788,6 +935,12 @@ void MainWindow::setupMenus() {
             config.setCustomUrl(urlEdit->text());
             config.setCustomTrayIcon(selectedTrayIcon);
             config.setCustomAppIcon(selectedAppIcon);
+            config.setBackgroundCheckInterval(intervalSlider->value());
+            config.setShowTrayTooltip(tooltipCheck->isChecked());
+            
+            if (tray) {
+                tray->setTooltipEnabled(tooltipCheck->isChecked());
+            }
 
             // Immediately update the tray icon
             if (tray) {

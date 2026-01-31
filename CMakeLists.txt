@@ -14,7 +14,6 @@ set(CMAKE_AUTOUIC ON)
 # -----------------------------
 # Dependencies
 # -----------------------------
-find_package(Vulkan REQUIRED)
 
 # -----------------------------
 # Qt6
@@ -63,9 +62,6 @@ add_executable(whatsit
     ${WHATSIT_SOURCES}
     ${WHATSIT_HEADERS}
 )
-
-# Arch / KF6 include layout
-target_include_directories(whatsit PRIVATE /usr/include/KF6)
 
 # -----------------------------
 # Linking
