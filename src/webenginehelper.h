@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QObject>
+#include <QWebEngineFullScreenRequest>
 
 class ConfigManager;
 class QWebEngineView;
@@ -26,6 +27,7 @@ signals:
     void activationRequested();
 
 private slots:
+    void handleFullScreenRequested(QWebEngineFullScreenRequest request);
     void handleDownloadRequested(QWebEngineDownloadRequest *download);
     void handleTitleChanged(const QString &title);
 

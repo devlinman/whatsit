@@ -45,6 +45,14 @@ class MainWindow : public QMainWindow {
     // unified tray/window behavior
     void showAndRaise();
 
+  protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
+  private slots:
+    void hideCursor();
+
+  private:
+
     QWebEngineView *view;
     QUrl sendMessageURL;
 
@@ -55,6 +63,7 @@ class MainWindow : public QMainWindow {
     QTimer *memoryTimer;
     QTimer *periodicCheckTimer;
     QTimer *activeCheckTimer;
+    QTimer *cursorHideTimer;
     bool m_hasUnread = false;
     bool m_isCheckingInMenu = false;
 };

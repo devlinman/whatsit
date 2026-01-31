@@ -7,6 +7,8 @@
 #include <QWebEnginePage>
 #include <QWebEngineProfile>
 #include <QWebEnginePermission>
+#include <QWebEngineSettings>
+#include <QWebEngineFullScreenRequest>
 #include <QWebEngineNotification>
 #include <KNotification>
 #include <QWebEngineDownloadRequest>
@@ -175,6 +177,9 @@ void WebEngineHelper::initialize()
     auto *page = new WhatsitPage(m_profile, m_view);
     m_view->setPage(page);
 
+    page->settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
+    connect(page, &QWebEnginePage::fullScreenRequested, this, &WebEngineHelper::handleFullScreenRequested);
+
     connect(m_view, &QWebEngineView::titleChanged, this, &WebEngineHelper::handleTitleChanged);
 
     connect(page, &QWebEnginePage::permissionRequested,
@@ -191,6 +196,20 @@ void WebEngineHelper::initialize()
     });
 
     setAudioMuted(m_config->muteAudio());
+}
+
+void WebEngineHelper::handleFullScreenRequested(QWebEngineFullScreenRequest request)
+{
+    request.accept();
+    if (request.toggleOn()) {
+        if (m_view && m_view->window()) {
+            m_view->window()->setWindowState(Qt::WindowFullScreen);
+        }
+    } else {
+        if (m_view && m_view->window()) {
+            m_view->window()->setWindowState(m_view->window()->windowState() & ~Qt::WindowFullScreen);
+        }
+    }
 }
 
 void WebEngineHelper::handleTitleChanged(const QString &title)

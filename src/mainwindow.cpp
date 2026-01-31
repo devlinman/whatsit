@@ -4,6 +4,7 @@
 #include <KIconDialog>
 #include <KIconLoader>
 #include <KNotification>
+#include <QApplication>
 #include <QCloseEvent>
 #include <QDialog>
 #include <QDir>
@@ -40,6 +41,12 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), view(new QWebEngineView(this)), web(nullptr),
       tray(nullptr), ipc(nullptr) {
     Logger::log("MainWindow constructor");
+    
+    cursorHideTimer = new QTimer(this);
+    cursorHideTimer->setInterval(3000); // 3 seconds
+    cursorHideTimer->setSingleShot(true);
+    connect(cursorHideTimer, &QTimer::timeout, this, &MainWindow::hideCursor);
+
     // Prevent Qt from quitting when last window is hidden
     qApp->setQuitOnLastWindowClosed(false);
 
@@ -150,6 +157,9 @@ MainWindow::MainWindow(QWidget *parent)
     activeCheckTimer = new QTimer(this);
     activeCheckTimer->setSingleShot(true);
     connect(activeCheckTimer, &QTimer::timeout, this, &MainWindow::finishPeriodicCheck);
+
+    // Install event filter to track mouse activity globally
+    qApp->installEventFilter(this);
 
     auto *quitShortcut = new QShortcut(QKeySequence::Quit, this);
     quitShortcut->setContext(Qt::ApplicationShortcut);
@@ -377,8 +387,44 @@ void MainWindow::changeEvent(QEvent *event) {
                 tray->setUnreadIndicator(false);
             }
         }
+    } else if (event->type() == QEvent::WindowStateChange) {
+        if (windowState() & Qt::WindowFullScreen) {
+            cursorHideTimer->start();
+        } else {
+            cursorHideTimer->stop();
+            while (QApplication::overrideCursor()) {
+                QApplication::restoreOverrideCursor();
+            }
+        }
     }
     QMainWindow::changeEvent(event);
+}
+
+void MainWindow::hideCursor() {
+    if (isFullScreen() && !QApplication::overrideCursor()) {
+        QApplication::setOverrideCursor(Qt::BlankCursor);
+    }
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::MouseMove || 
+        event->type() == QEvent::KeyPress || 
+        event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::Wheel) {
+        
+        // If cursor is hidden, restore it
+        if (QApplication::overrideCursor()) {
+             while (QApplication::overrideCursor()) {
+                QApplication::restoreOverrideCursor();
+            }
+        }
+
+        // Reset the timer if we are in full screen
+        if (isFullScreen()) {
+            cursorHideTimer->start();
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }
 
 void MainWindow::updateMemoryState(bool forceLoad) {
