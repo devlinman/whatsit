@@ -44,3 +44,24 @@ Thanks for your interest in contributing!
 * Document behavior changes when needed.
 
 Thanks for helping improve the project!
+
+## Discussions
+* Check the discussion page for topics.
+* Start a new topic, if you want to. But keep it relevant.
+
+
+# Signing
+
+* It is recommended to sign your commits and PRs.
+
+* Signing commits helps verify that changes were actually made by you, and not impersonated or altered in transit.  
+It adds an extra layer of trust and accountability, especially for open-source projects.
+
+* If you want to sign commits, you can configure Git with a GPG or SSH signing key. For example:
+
+```
+git commit -S -m "Your message"
+```
+* GitHub will then show your commit as Verified.
+
+* This is optional, but encouraged for contributors submitting patches or long-term changes.
