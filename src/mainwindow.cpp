@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QCheckBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QShortcut>
@@ -73,6 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
     tray = new TrayManager(this);
     tray->initialize();
     tray->setIndicatorEnabled(config.showTrayIndicator());
+    tray->setTooltipEnabled(config.showTrayTooltip());
 
     connect(web, &WebEngineHelper::notificationReceived, this, &MainWindow::handleMessageDetected);
     connect(web, &WebEngineHelper::unreadChanged, this, &MainWindow::handleUnreadChanged);
@@ -169,6 +171,12 @@ MainWindow::MainWindow(QWidget *parent)
         Logger::log("Low-memory startup: Delaying load of " +
                     targetUrl.toString());
         view->setUrl(DARK_BLANK_URL);
+
+        int interval = config.backgroundCheckInterval();
+        if (interval > 0) {
+            Logger::log(QString("Starting periodic check timer (Startup): %1 minutes").arg(interval));
+            periodicCheckTimer->start(interval * 60 * 1000);
+        }
     } else {
         Logger::log("Startup load: " + targetUrl.toString());
         view->load(targetUrl);
@@ -359,6 +367,18 @@ void MainWindow::showEvent(QShowEvent *event) {
     if (tray) {
         tray->setUnreadIndicator(false);
     }
+}
+
+void MainWindow::changeEvent(QEvent *event) {
+    if (event->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            m_hasUnread = false;
+            if (tray) {
+                tray->setUnreadIndicator(false);
+            }
+        }
+    }
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::updateMemoryState(bool forceLoad) {
@@ -661,6 +681,9 @@ void MainWindow::setupMenus() {
         config.setDebugLoggingEnabled(v);
         Logger::setFileLoggingEnabled(v);
         Logger::log(v ? "File logging ENABLED" : "File logging DISABLED");
+        if (!v) {
+            Logger::deleteLogFile();
+        }
     });
 
     auto *useLessMem = advanced->addAction("Use Less Memory");
@@ -784,6 +807,9 @@ void MainWindow::setupMenus() {
         QString currentAppIcon = config.customAppIcon();
         QString selectedAppIcon = currentAppIcon;
 
+        auto *tooltipCheck = new QCheckBox("Show Tooltip", &dlg);
+        tooltipCheck->setChecked(config.showTrayTooltip());
+
         auto *intervalSlider = new QSlider(Qt::Horizontal, &dlg);
         intervalSlider->setRange(0, 5);
         intervalSlider->setTickPosition(QSlider::TicksBelow);
@@ -795,7 +821,7 @@ void MainWindow::setupMenus() {
             if (val == 0)
                 intervalLabel->setText("Background Check: Disabled");
             else
-                intervalLabel->setText(QString("Background Check: Every %1 min").arg(val));
+                intervalLabel->setText(QString("Background Check: Every %1 min\n(App wakes up, loads page, waits 30s, then sleeps)").arg(val));
         };
         updateIntervalLabel(intervalSlider->value());
         connect(intervalSlider, &QSlider::valueChanged, updateIntervalLabel);
@@ -857,6 +883,9 @@ void MainWindow::setupMenus() {
         layout->addRow("App Icon:", appIconBtn);
         layout->addRow("Wake Up:", intervalLabel);
         layout->addRow("", intervalSlider);
+        
+        layout->addItem(new QSpacerItem(0, 10, QSizePolicy::Minimum, QSizePolicy::Fixed));
+        layout->addRow("", tooltipCheck);
 
         // Push buttons to bottom
         layout->addItem(new QSpacerItem(
@@ -873,6 +902,7 @@ void MainWindow::setupMenus() {
         connect(removeBtn, &QPushButton::clicked, [&] {
             config.removeCustomConfig();
             config.setBackgroundCheckInterval(0); // Reset interval
+            config.setShowTrayTooltip(true); // Default
 
             // Immediately update the tray icon
             if (tray) {
@@ -906,6 +936,11 @@ void MainWindow::setupMenus() {
             config.setCustomTrayIcon(selectedTrayIcon);
             config.setCustomAppIcon(selectedAppIcon);
             config.setBackgroundCheckInterval(intervalSlider->value());
+            config.setShowTrayTooltip(tooltipCheck->isChecked());
+            
+            if (tray) {
+                tray->setTooltipEnabled(tooltipCheck->isChecked());
+            }
 
             // Immediately update the tray icon
             if (tray) {

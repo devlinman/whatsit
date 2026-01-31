@@ -15,6 +15,7 @@ public:
     void setIcon(const QString &iconName);
     void setUnreadIndicator(bool show);
     void setIndicatorEnabled(bool enabled);
+    void setTooltipEnabled(bool enabled);
 
 signals:
     void showRequested();
@@ -23,9 +24,11 @@ signals:
 
 private:
     void updateIcon();
+    void updateTooltip();
 
     KStatusNotifierItem *tray;
     QString m_currentIconName;
     bool m_showUnreadIndicator = false;
     bool m_indicatorEnabled = true;
+    bool m_tooltipEnabled = true;
 };

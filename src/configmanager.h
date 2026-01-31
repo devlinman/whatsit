@@ -14,6 +14,7 @@ class ConfigManager {
 
     // --- General ---
     bool rememberDownloadPaths() const;
+    bool showTrayTooltip() const;
 
     // --- Window ---
     bool maximizedByDefault() const;
@@ -54,6 +55,7 @@ class ConfigManager {
 
     // --- Setters ---
     void setRememberDownloadPaths(bool);
+    void setShowTrayTooltip(bool);
 
     void setMaximizedByDefault(bool);
     void setRememberWindowSize(bool);

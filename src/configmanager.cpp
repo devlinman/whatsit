@@ -28,6 +28,7 @@ void ConfigManager::load() {
     Logger::log("Loading configuration...");
     // --- Boolean schema ---
     loadBool("General/RememberDownloadPaths", true);
+    loadBool("General/ShowTrayTooltip", true);
 
     loadBool("Window/MaximizedByDefault", false);
     loadBool("Window/RememberWindowSize", true);
@@ -80,6 +81,10 @@ void ConfigManager::sync() {
 
 bool ConfigManager::rememberDownloadPaths() const {
     return boolValue("General/RememberDownloadPaths");
+}
+
+bool ConfigManager::showTrayTooltip() const {
+    return boolValue("General/ShowTrayTooltip");
 }
 
 bool ConfigManager::maximizedByDefault() const {
@@ -197,6 +202,10 @@ void ConfigManager::removeCustomConfig() {
 
 void ConfigManager::setRememberDownloadPaths(bool v) {
     setBoolValue("General/RememberDownloadPaths", v);
+}
+
+void ConfigManager::setShowTrayTooltip(bool v) {
+    setBoolValue("General/ShowTrayTooltip", v);
 }
 
 void ConfigManager::setMaximizedByDefault(bool v) {

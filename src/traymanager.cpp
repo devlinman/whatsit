@@ -21,6 +21,7 @@ void TrayManager::initialize()
     tray->setStatus(KStatusNotifierItem::Active);
     
     updateIcon();
+    updateTooltip();
 
     auto *menu = new QMenu;
     menu->addAction(QIcon::fromTheme("view-visible"), "Show", this, &TrayManager::showRequested);
@@ -46,6 +47,7 @@ void TrayManager::setUnreadIndicator(bool show)
 
     m_showUnreadIndicator = show;
     updateIcon();
+    updateTooltip();
 }
 
 void TrayManager::setIndicatorEnabled(bool enabled)
@@ -55,6 +57,32 @@ void TrayManager::setIndicatorEnabled(bool enabled)
 
     m_indicatorEnabled = enabled;
     updateIcon();
+    updateTooltip();
+}
+
+void TrayManager::setTooltipEnabled(bool enabled)
+{
+    if (m_tooltipEnabled == enabled)
+        return;
+
+    m_tooltipEnabled = enabled;
+    updateTooltip();
+}
+
+void TrayManager::updateTooltip()
+{
+    if (!tray) return;
+
+    if (!m_tooltipEnabled) {
+        tray->setToolTip("", "", "");
+        return;
+    }
+
+    if (m_indicatorEnabled && m_showUnreadIndicator) {
+        tray->setToolTip("whatsit", "Whatsit", "New Message Detected");
+    } else {
+        tray->setToolTip("whatsit", "Whatsit", "WhatsApp Web Client");
+    }
 }
 
 void TrayManager::updateIcon()

@@ -22,6 +22,7 @@ class MainWindow : public QMainWindow {
     void closeEvent(QCloseEvent *event) override;
     void hideEvent(QHideEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
   private slots:
     void checkMemoryUsage();
