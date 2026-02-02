@@ -110,6 +110,10 @@ yay -S whatsit-git
 
 - Check [Qt NOTICE](./LICENSES/Qt-NOTICE.txt) for more information. Qt is licensed under the GNU Lesser General Public License v3 ([LGPL v3](./LICENSES/LGPL-3.0.txt)).
 
+### Third-Party Assets
+
+- Footer SVG generated using Capsule Render  
+  https://capsule-render.vercel.app/  
 
 <div align="center">
 
