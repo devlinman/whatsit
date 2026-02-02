@@ -16,7 +16,7 @@ https://capsule-render.vercel.app/
 
         <!-- Rounded corner mask -->
         <clipPath id="rounded">
-          <rect x="0" y="0" width="854" height="120" rx="24" ry="24"/>
+          <rect x="0" y="0" width="854" height="120" rx="32" ry="32"/>
         </clipPath>
       </defs>
         
