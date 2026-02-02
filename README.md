@@ -113,10 +113,8 @@ yay -S whatsit-git
 
 <div align="center">
 
-<br>
 <div align="center">
   <img src=".github/assets/waves.svg" width="100%" />
 </div>
-<br>
 
 </div>
