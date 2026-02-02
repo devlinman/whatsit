@@ -112,8 +112,7 @@ yay -S whatsit-git
 
 ### Third-Party Assets
 
-- Footer SVG generated using Capsule Render  
-  https://capsule-render.vercel.app/  
+- Footer SVG generated via [Capsule Render](https://capsule-render.vercel.app/)
 
 <div align="center">
 
