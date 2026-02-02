@@ -33,3 +33,4 @@ whatsit
 # Ignore these folders
 /ignore
 /package
+.kateproject.build

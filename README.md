@@ -110,15 +110,11 @@ yay -S whatsit-git
 
 - Check [Qt NOTICE](./LICENSES/Qt-NOTICE.txt) for more information. Qt is licensed under the GNU Lesser General Public License v3 ([LGPL v3](./LICENSES/LGPL-3.0.txt)).
 
----
 
 <div align="center">
 
 <br>
-
-<img 
-  src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer"
-  width="100%"
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer" width="100%"
 />
 <br>
 
