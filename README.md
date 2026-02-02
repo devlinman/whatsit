@@ -114,8 +114,9 @@ yay -S whatsit-git
 <div align="center">
 
 <br>
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer" width="100%" style="border-radius: 16px;"
-/>
+<div align="center">
+  <img src=".github/assets/waves.svg" width="100%" />
+</div>
 <br>
 
 </div>
