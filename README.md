@@ -116,8 +116,10 @@ yay -S whatsit-git
 
 <br>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=100&section=footer"/>
-
+<img 
+  src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer"
+  width="100%"
+/>
 <br>
 
 </div>
