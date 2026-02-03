@@ -2,7 +2,7 @@
 Type=Application
 Name=Whatsit
 Comment=WhatsApp Web Client
-Exec=/usr/bin/whatsit %u
+Exec=whatsit %u
 Icon=whatsit
 Terminal=false
 Categories=Network;Chat;
