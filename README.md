@@ -123,9 +123,9 @@ All third-party trademarks and assets belong to their respective owners.
 
 ### Thanks for visiting.
 
-If you found this project useful, consider starring it!
+If you found this project useful, consider ⭐starring and ⤿sharing it!
 
-Made by <span>devlinman</span>
+Made with ❤️, ☕ and 🍿.
   <img src=".github/assets/waves2.svg" width="100%" />
 
 </div>
