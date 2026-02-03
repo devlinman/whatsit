@@ -113,6 +113,11 @@ install(FILES resources/WhatsApp.png
     DESTINATION share/icons/hicolor/256x256/apps
 )
 
+install(FILES LICENSE
+    DESTINATION share/licenses/whatsit
+)
+
+
 # -----------------------------
 # Uninstall support
 # -----------------------------

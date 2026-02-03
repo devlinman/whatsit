@@ -68,7 +68,7 @@
 - Check [Discussions](https://github.com/devlinman/whatsit/discussions).
 
 ### Changelog
-- Check `CHANGELOG.md` to see the updates and information about versions and releases (on the master branch).
+- Check [CHANGELOG](./CHANGELOG.md) to see the updates and information about versions and releases (on the master branch).
 
 ### Progress & Future
 - Check the [Project](https://github.com/users/devlinman/projects/) to track and find information about updates.
@@ -88,7 +88,7 @@
 yay -S whatsit-git
 ```
 
-### Please refer to [wiki docs](https://github.com/devlinman/whatsit/wiki) for more information on Build & Install.
+### Please refer to [wiki docs](https://github.com/devlinman/whatsit/wiki) for more information on **Building from source** and Install.
 
 
 ---
@@ -112,17 +112,20 @@ yay -S whatsit-git
 
 ### Third-Party Assets
 
-- Footer SVG generated via [Capsule Render](https://capsule-render.vercel.app/)
-- WhatsApp branding/images are trademarks of Meta and used for illustrative purposes only
-- Badges generated via [Shields.io](https://shields.io/)
-- Icons provided by [Simple Icons](https://simpleicons.org/)
+- Footer SVG generated via [Capsule Render](https://capsule-render.vercel.app/).
+- WhatsApp branding/images are trademarks of Meta and used for illustrative purposes only.
+- Badges generated via [Shields.io](https://shields.io/).
+- Icons provided by [Simple Icons](https://simpleicons.org/).
 
 All third-party trademarks and assets belong to their respective owners.
 
 <div align="center">
 
-<div align="center">
-  <img src=".github/assets/waves.svg" width="100%" />
-</div>
+### Thanks for visiting.
+
+If you found this project useful, consider ⭐starring and ⤿sharing it!
+
+Made with ❤️, ☕ and 🍿.
+  <img src=".github/assets/waves2.svg" width="100%" />
 
 </div>
