@@ -6,6 +6,8 @@ Thanks for your interest in contributing!
 
 * This is a C++ / Qt project — keep changes clean, focused, and consistent with the existing style.
 * Keep things sane: small PRs, clear commits, minimal surprises.
+* Follow Semantic Versioning rules.
+* Ensure that the project builds and runs properly before pulling it into master.
 
 ## Projects
 * Use the [Project](https://github.com/users/devlinman/projects/) created for this app to track your activity and that of others.
