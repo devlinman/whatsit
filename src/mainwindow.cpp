@@ -36,8 +36,8 @@ static constexpr int DEFAULT_H = 800;
 // <html><body style="background-color: #1e1e1e;"></body></html>
 static const QUrl DARK_BLANK_URL("data:text/html;base64,PGh0bWw+PGJvZHkgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICMxZTFlMWU7Ij48L2JvZHk+PC9odG1sPg==");
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), view(new QWebEngineView(this)), web(nullptr),
+MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
+    : QMainWindow(parent), config(config), view(new QWebEngineView(this)), web(nullptr),
       tray(nullptr), ipc(nullptr) {
     Logger::log("MainWindow constructor");
     // Prevent Qt from quitting when last window is hidden
@@ -45,7 +45,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(view);
 
-    config.load();
     Logger::setFileLoggingEnabled(config.debugLoggingEnabled());
 
     if (config.rememberWindowSize())
@@ -252,7 +251,7 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
             // Debug:
             // Logger::log("Stored sendMessageURL: " +
             // sendMessageURL.toString());
-            Logger::log("Recieved valid sendMessageURL");
+            Logger::log("Received valid sendMessageURL");
 
             view->load(sendMessageURL);
 
@@ -266,14 +265,16 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
 // unified show / raise behavior
 void MainWindow::showAndRaise() {
     if (isMinimized())
-        setWindowState(windowState() & ~Qt::WindowMinimized | Qt::WindowActive);
+        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);// Bitwise | has lower precedence than &
 
     show();
     raise();
     activateWindow();
 
     m_hasUnread = false;
+    if (tray) { // be consistant
     tray->setUnreadIndicator(false);
+    }
 }
 
 void MainWindow::handleMessageDetected() {
@@ -287,6 +288,11 @@ void MainWindow::handleUnreadChanged(bool hasUnread) {
     if (hasUnread && (!isActiveWindow() || isMinimized() || !isVisible())) {
         m_hasUnread = true;
         tray->setUnreadIndicator(true);
+    }
+    if (!hasUnread) { // what if user reads the message in mobile or in browser? you are still gonna show unread noti??
+        m_hasUnread = false;
+        tray->setUnreadIndicator(false);
+        return;
     }
 }
 
@@ -919,7 +925,7 @@ void MainWindow::setupMenus() {
             if (!desktopFile.exists()) {
                 Logger::log("Desktop file not found; you're on your own.");
             }
-            if (!desktopFile.remove()) {
+            if (desktopFile.exists() && !desktopFile.remove()) { // you will only remove it if it exists bruh
                 Logger::log("Failed to remove desktop file.");
             } else {
                 Logger::log("Desktop file removed successfully.");
