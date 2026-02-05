@@ -317,16 +317,19 @@ void ConfigManager::applyAutostart(bool enabled) {
         QDir().mkpath(autostartDir);
 
         QFile file(desktopFile);
+        // No error handling here. what if file.open faisl? #TODO
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             QTextStream out(&file);
             out << "[Desktop Entry]\n";
             out << "Type=Application\n";
             out << "Version=1.0\n";
             out << "Name=whatsit\n";
+            // out << "X-GNOME-Autostart-enabled=true\n"; // why only GNOME? anyway this is deprecated
+            out << "Hidden=false\n"; // current standard; desktop agnostic
+            out << "Categories=Utility;\n"; // puts this in utilities category in menu
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
-            out << "X-GNOME-Autostart-enabled=true\n";
         }
     } else {
         QFile::remove(desktopFile); // removes only this file
