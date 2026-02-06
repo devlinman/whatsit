@@ -25,11 +25,10 @@
 
 - I have tried many Whatsapp web clients, but none of them are fast and light. None of them felt right...
 
-- My setup is Arch-KDE Plasma-Wayland. If your setup is similar, the app should work well.
+- The app is made for a Arch-KDE Plasma-Wayland setup. But it may work on other setups too.
 
-- In `v3.x.x`, additional features such as memory kill switch and custom app and tray icons, etc. You may call these features bloat, but I like to have those. If you don't want those, use lower versions of the app.
-
-- If you want the minimal and bare version, use `v1.0.1`. Tray icon and Notifications are implemented in `v2.0.0`.
+## NOTE to WhatsApp
+<div align="center"><h3 align="left" style="color: yellow;"> Hello, WhatsApp-kun. <br> This app is just a wrapper for the website. <br>And I Prawmise, I am not changing any elements of the website to make it work. <br> So in your lingo, This is just an impressive wrapper for chromium, but not a 3rd party client. <br>Don't take me down, pweese :( </h3></div>
 
 ### Features
 
@@ -119,13 +118,18 @@ yay -S whatsit-git
 
 All third-party trademarks and assets belong to their respective owners.
 
+---
+<br>
 <div align="center">
 
 ### Thanks for visiting.
 
-If you found this project useful, consider ⭐starring and ⤿sharing it!
+If you found this project useful... 
 
-Made with ❤️, ☕ and 🍿.
+consider 🌟 starring &  🔗‍️ sharing it!
+
+Made with ❤️ & ☕ 
+
   <img src=".github/assets/waves2.svg" width="100%" />
 
 </div>
