@@ -83,6 +83,7 @@ namespace {
                                          }
         };
     };
+};
 
 }
 
@@ -177,12 +178,13 @@ void WebEngineHelper::initialize()
         emit notificationReceived();
     });
 
-    auto *page = new WhatsitPage(m_profile, m_view);
+    auto* page = new WhatsitPage(m_profile, m_view);
     m_view->setPage(page);
 
     connect(m_view, &QWebEngineView::titleChanged, this, &WebEngineHelper::handleTitleChanged);
 
     connect(page, &QWebEnginePage::permissionRequested,
+<<<<<<< HEAD
             this, [this](QWebEnginePermission permission) {
 
         const QUrl origin = permission.origin();
@@ -201,6 +203,25 @@ void WebEngineHelper::initialize()
         }
 
         switch (type) { // only noti, mic, cam and screencapture
+=======
+        this, [this](QWebEnginePermission permission) {
+            const QUrl origin = permission.origin();
+            const QString host = origin.host();
+
+            const bool isWhatsapp = (host == "web.whatsapp.com") || (host.endsWith(".whatsapp.com"));
+            const auto type = permission.permissionType();
+
+            Logger::log("WebEngineHelper: Permission requested");
+            Logger::log("Type: " + QString::number(static_cast<int>(type)));
+
+            if (!isWhatsapp) { // if not from whatsapp
+                Logger::log("Not Whatsapp, denying permission");
+                permission.deny();
+                return;
+            }
+
+            switch (type) { // only noti, mic, cam and screencapture
+>>>>>>> a18a535 (add: mic, cam and screen share permission)
             case QWebEnginePermission::PermissionType::Notifications:
                 if (m_config->systemNotifications()) {
                     Logger::log("WebEngineHelper: Notification Permission Requested via QWebEnginePermission");
@@ -210,8 +231,13 @@ void WebEngineHelper::initialize()
                 } else {
                     Logger::log("WebEngineHelper: Notification Permission disable in config: Deny");
                     permission.deny(); // why didn't you add this before? wait can we even deny notification permission?
+<<<<<<< HEAD
                 }                     // or did you automatically grant the permission just like i wrote for mic and cam?
                 break;                // I think you did. oh well, if anyone wants they can deny it in config manually
+=======
+                } // or did you automatically grant the permission just like i wrote for mic and cam?
+                break; // I think you did. oh well, if anyone wants they can deny it in config manually
+>>>>>>> a18a535 (add: mic, cam and screen share permission)
 
             case QWebEnginePermission::PermissionType::MediaAudioCapture:
             case QWebEnginePermission::PermissionType::MediaVideoCapture:
@@ -231,8 +257,13 @@ void WebEngineHelper::initialize()
                 Logger::log("WebEngineHelper: Unknown Permission Requested");
                 permission.deny();
                 break;
+<<<<<<< HEAD
         }
     });
+=======
+            }
+        });
+>>>>>>> a18a535 (add: mic, cam and screen share permission)
 
     setAudioMuted(m_config->muteAudio());
 }
