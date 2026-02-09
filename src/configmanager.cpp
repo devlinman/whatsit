@@ -217,17 +217,13 @@ void ConfigManager::setRememberWindowSize(bool v) {
 }
 
 void ConfigManager::setWindowSize(const QSize &size) {
-    QSettings settings(m_configPath, QSettings::IniFormat);
-    settings.setValue("Window/Size", size);
-    settings.sync(); // 68 77 184 you added this everywhere
+    QSettings(m_configPath, QSettings::IniFormat).setValue("Window/Size", size);
 }
 
 void ConfigManager::setZoomLevel(double level) {
     // Ensure we store a clean 1-decimal value
     double rounded = std::round(level * 10.0) / 10.0;
-    QSettings settings(m_configPath, QSettings::IniFormat);
-    settings.setValue("Window/ZoomLevel", rounded);
-    settings.sync();
+    QSettings(m_configPath, QSettings::IniFormat).setValue("Window/ZoomLevel", rounded);
 }
 
 void ConfigManager::setAutostartOnLogin(bool v) {
