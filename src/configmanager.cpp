@@ -326,7 +326,7 @@ void ConfigManager::applyAutostart(bool enabled) {
             out << "Name=whatsit\n";
             // out << "X-GNOME-Autostart-enabled=true\n"; // why only GNOME? anyway this is deprecated
             out << "Hidden=false\n"; // current standard; desktop agnostic
-            out << "Categories=Utility;\n"; // puts this in utilities category in menu
+            out << "Categories=Network;Chat;\n";
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
