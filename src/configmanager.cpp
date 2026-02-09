@@ -217,14 +217,17 @@ void ConfigManager::setRememberWindowSize(bool v) {
 }
 
 void ConfigManager::setWindowSize(const QSize &size) {
-    QSettings(m_configPath, QSettings::IniFormat).setValue("Window/Size", size);
+    QSettings settings(m_configPath, QSettings::IniFormat);
+    settings.setValue("Window/Size", size);
+    settings.sync(); // 68 77 184 you added this everywhere
 }
 
 void ConfigManager::setZoomLevel(double level) {
     // Ensure we store a clean 1-decimal value
     double rounded = std::round(level * 10.0) / 10.0;
-    QSettings(m_configPath, QSettings::IniFormat)
-        .setValue("Window/ZoomLevel", rounded);
+    QSettings settings(m_configPath, QSettings::IniFormat);
+    settings.setValue("Window/ZoomLevel", rounded);
+    settings.sync();
 }
 
 void ConfigManager::setAutostartOnLogin(bool v) {
@@ -314,7 +317,10 @@ void ConfigManager::applyAutostart(bool enabled) {
     const QString desktopFile = autostartDir + "/whatsit.desktop";
 
     if (enabled) {
-        QDir().mkpath(autostartDir);
+        if (!QDir().mkpath(autostartDir)) {
+            Logger::log("ERROR: Dir not created: " + autostartDir);
+            return;
+        } // We should see if dir creating for autostart is the problem
 
         QFile file(desktopFile);
         // No error handling here. what if file.open faisl? #TODO
@@ -324,13 +330,15 @@ void ConfigManager::applyAutostart(bool enabled) {
             out << "Type=Application\n";
             out << "Version=1.0\n";
             out << "Name=whatsit\n";
-            // out << "X-GNOME-Autostart-enabled=true\n"; // why only GNOME? anyway this is deprecated
-            out << "Hidden=false\n"; // current standard; desktop agnostic
+            out << "Hidden=false\n";
             out << "Categories=Network;Chat;\n";
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
-        }
+            file.close(); // I closed this in another file. I forgot here
+        } else {
+            Logger::log("ERROR: File not created:" + file.errorString());
+        } // Let's see why autostart fails
     } else {
         QFile::remove(desktopFile); // removes only this file
     }
