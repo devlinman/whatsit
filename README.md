@@ -1,4 +1,7 @@
-<img align="left" src="./pics/logo.png" alt="Whatsit Logo" width="140">
+<div align="center">
+  <img src="./pics/banner.png" alt="Whatsit Logo" width="400" style="border-radius:10px;">
+</div>
+
 <p align="center">
   <!-- Core Tech -->
   <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white"/>
@@ -14,6 +17,7 @@
   <!-- Extras -->
 <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=open-source-initiative&logoColor=white"/>
 
+---
 <!--Start--->
 <br>
 <h1 align="center">Mr. Whatsit</h1> <p align="center"> <sub><span style="color: gray;">From <i>Stranger Things</i> S5</span><sub></p>
@@ -25,11 +29,10 @@
 
 - I have tried many Whatsapp web clients, but none of them are fast and light. None of them felt right...
 
-- My setup is Arch-KDE Plasma-Wayland. If your setup is similar, the app should work well.
+- The app is made for a Arch-KDE Plasma-Wayland setup. But it may work on other setups too.
 
-- In `v3.x.x`, additional features such as memory kill switch and custom app and tray icons, etc. You may call these features bloat, but I like to have those. If you don't want those, use lower versions of the app.
+---
 
-- If you want the minimal and bare version, use `v1.0.1`. Tray icon and Notifications are implemented in `v2.0.0`.
 
 ### Features
 
@@ -119,13 +122,18 @@ yay -S whatsit-git
 
 All third-party trademarks and assets belong to their respective owners.
 
+---
+<br>
 <div align="center">
 
 ### Thanks for visiting.
 
-If you found this project useful, consider ⭐starring and ⤿sharing it!
+If you found this project useful... 
 
-Made with ❤️, ☕ and 🍿.
+consider 🌟 starring &  🔗‍️ sharing it!
+
+Made with ❤️ & ☕ 
+
   <img src=".github/assets/waves2.svg" width="100%" />
 
 </div>
