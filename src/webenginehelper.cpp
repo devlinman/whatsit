@@ -8,6 +8,7 @@
 #include <QWebEngineProfile>
 #include <QWebEnginePermission>
 #include <QWebEngineNotification>
+#include <QWebEngineSettings>
 #include <KNotification>
 #include <QWebEngineDownloadRequest>
 #include <QDesktopServices>
@@ -118,6 +119,10 @@ void WebEngineHelper::initialize()
     connect(m_profile, &QWebEngineProfile::downloadRequested,
             this, &WebEngineHelper::handleDownloadRequested);
 
+    m_profile->settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true); // added just in case; idk if whatsapp call ui need fullscreen
+    m_profile->settings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false); // this too; useful for remote audio/video streams in chromium
+    m_profile->settings()->setAttribute(QWebEngineSettings::ScreenCaptureEnabled, true); // we will add for future use since screen share is supported in video calls
+
     // Notification Presenter
     m_profile->setNotificationPresenter([this](std::unique_ptr<QWebEngineNotification> notification) {
         if (!m_config->systemNotifications()) {
@@ -178,15 +183,54 @@ void WebEngineHelper::initialize()
     connect(m_view, &QWebEngineView::titleChanged, this, &WebEngineHelper::handleTitleChanged);
 
     connect(page, &QWebEnginePage::permissionRequested,
-            page, [page](QWebEnginePermission permission) {
-        if (permission.permissionType() == QWebEnginePermission::PermissionType::Notifications) {
-            Logger::log("WebEngineHelper: Notification Permission Requested via QWebEnginePermission");
-            Logger::log("Origin: " + permission.origin().toString());
-            Logger::log("Granting permission...");
-            permission.grant();
-            Logger::log("Permission granted.");
-        } else {
-             Logger::log("WebEngineHelper: Unknown Permission Requested");
+            this, [this](QWebEnginePermission permission) {
+
+        const QUrl origin = permission.origin();
+        const QString host = origin.host();
+
+        const bool isWhatsapp = (host == "web.whatsapp.com") || (host.endsWith(".whatsapp.com"));
+        const auto type = permission.permissionType();
+
+        Logger::log("WebEngineHelper: Permission requested");
+        Logger::log("Type: " + QString::number(static_cast<int>(type)));
+
+        if (!isWhatsapp) { // if not from whatsapp
+            Logger::log("Not Whatsapp, denying permission");
+            permission.deny();
+            return;
+        }
+
+        switch (type) { // only noti, mic, cam and screencapture
+            case QWebEnginePermission::PermissionType::Notifications:
+                if (m_config->systemNotifications()) {
+                    Logger::log("WebEngineHelper: Notification Permission Requested via QWebEnginePermission");
+                    Logger::log("Granting permission...");
+                    permission.grant();
+                    Logger::log("Permission granted.");
+                } else {
+                    Logger::log("WebEngineHelper: Notification Permission disable in config: Deny");
+                    permission.deny(); // why didn't you add this before? wait can we even deny notification permission?
+                }                     // or did you automatically grant the permission just like i wrote for mic and cam?
+                break;                // I think you did. oh well, if anyone wants they can deny it in config manually
+
+            case QWebEnginePermission::PermissionType::MediaAudioCapture:
+            case QWebEnginePermission::PermissionType::MediaVideoCapture:
+            case QWebEnginePermission::PermissionType::MediaAudioVideoCapture:
+                Logger::log("WebEngineHelper:Granting media capture permission (mic/cam)");
+                permission.grant();
+                break;
+
+            case QWebEnginePermission::PermissionType::DesktopVideoCapture:
+            case QWebEnginePermission::PermissionType::DesktopAudioVideoCapture:
+                Logger::log("WebEngineHelper: Desktop capture permission (screen share)");
+                permission.grant();
+                break;
+
+            default: // deny any other permission
+                Logger::log("Origin: " + permission.origin().toString());
+                Logger::log("WebEngineHelper: Unknown Permission Requested");
+                permission.deny();
+                break;
         }
     });
 
