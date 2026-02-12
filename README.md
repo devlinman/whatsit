@@ -32,10 +32,6 @@
 - The app is made for a Arch-KDE Plasma-Wayland setup. But it may work on other setups too.
 
 ---
-## NOTE to WhatsApp
-<div align="center"><h3 align="left" style="color: yellow;"> Hello, WhatsApp-kun. <br> This app is just a wrapper for the website. <br>And I Prawmise, I am not changing any elements of the website to make it work. <br> So in your lingo, This is just an impressive wrapper for chromium, but not a 3rd party client. <br>Don't take me down, pweese :( </h3></div>
-
----
 
 
 ### Features
