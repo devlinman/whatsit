@@ -319,7 +319,6 @@ void ConfigManager::applyAutostart(bool enabled) {
         } // We should see if dir creating for autostart is the problem
 
         QFile file(desktopFile);
-        // No error handling here. what if file.open faisl? #TODO
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             QTextStream out(&file);
             out << "[Desktop Entry]\n";
@@ -329,10 +328,12 @@ void ConfigManager::applyAutostart(bool enabled) {
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
-            file.close(); // I closed this in another file. I forgot here
+            file.close();
         } else {
-            Logger::log("ERROR: File not created:" + file.errorString());
-        } // Let's see why autostart fails
+            Logger::log(QString("Failed to open autostart file: %1").arg(desktopFile));
+            return;
+        }
+
     } else {
         QFile::remove(desktopFile); // removes only this file
     }
