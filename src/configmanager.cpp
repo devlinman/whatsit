@@ -223,8 +223,7 @@ void ConfigManager::setWindowSize(const QSize &size) {
 void ConfigManager::setZoomLevel(double level) {
     // Ensure we store a clean 1-decimal value
     double rounded = std::round(level * 10.0) / 10.0;
-    QSettings(m_configPath, QSettings::IniFormat)
-        .setValue("Window/ZoomLevel", rounded);
+    QSettings(m_configPath, QSettings::IniFormat).setValue("Window/ZoomLevel", rounded);
 }
 
 void ConfigManager::setAutostartOnLogin(bool v) {
@@ -314,17 +313,18 @@ void ConfigManager::applyAutostart(bool enabled) {
     const QString desktopFile = autostartDir + "/whatsit.desktop";
 
     if (enabled) {
-        QDir().mkpath(autostartDir);
+        if (!QDir().mkpath(autostartDir)) {
+            Logger::log("ERROR: Dir not created: " + autostartDir);
+            return;
+        } // We should see if dir creating for autostart is the problem
 
         QFile file(desktopFile);
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             QTextStream out(&file);
             out << "[Desktop Entry]\n";
             out << "Type=Application\n";
-            out << "Version=1.0\n";
             out << "Name=whatsit\n";
             out << "Hidden=false\n";
-            out << "Categories=Utility;\n";
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
