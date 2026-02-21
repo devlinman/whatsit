@@ -324,10 +324,8 @@ void ConfigManager::applyAutostart(bool enabled) {
             QTextStream out(&file);
             out << "[Desktop Entry]\n";
             out << "Type=Application\n";
-            out << "Version=1.0\n";
             out << "Name=whatsit\n";
             out << "Hidden=false\n";
-            out << "Categories=Network;Chat;\n";
             out << "Exec=" << QCoreApplication::applicationFilePath() << "\n";
             out << "Icon=whatsit\n";
             out << "Terminal=false\n";
