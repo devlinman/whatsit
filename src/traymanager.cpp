@@ -1,9 +1,9 @@
 // traymanager.cpp
 #include "traymanager.h"
 #include <KStatusNotifierItem>
+#include <QIcon>
 #include <QMenu>
 #include <QPainter>
-#include <QIcon>
 #include <QPixmap>
 
 TrayManager::TrayManager(QObject *parent)
@@ -19,7 +19,6 @@ void TrayManager::initialize()
     tray->setTitle("whatsit");
     tray->setCategory(KStatusNotifierItem::ApplicationStatus);
     tray->setStatus(KStatusNotifierItem::Active);
-    
     updateIcon();
     updateTooltip();
 
@@ -31,7 +30,7 @@ void TrayManager::initialize()
 
     // Left-click on tray icon
     connect(tray, &KStatusNotifierItem::activateRequested,
-            this, &TrayManager::activated);
+        this, &TrayManager::activated);
 }
 
 void TrayManager::setIcon(const QString &iconName)
@@ -103,14 +102,15 @@ void TrayManager::updateIcon()
     if (pixmap.isNull()) {
         pixmap = QPixmap(64, 64);
         pixmap.fill(Qt::transparent);
-    }
+    } // hmmm...
 
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setBrush(Qt::red);
     painter.setPen(Qt::NoPen);
 
-    // Increase dot size by 50% (from 1/4 to 3/8)
+    //     64 * 3 / 8 = 24
+    //    Size of dot is 3/8 of size of pixmap
     int dotSize = (pixmap.width() * 3) / 8;
     painter.drawEllipse(pixmap.width() - dotSize - 2, 2, dotSize, dotSize);
     painter.end();

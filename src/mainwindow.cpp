@@ -1,10 +1,16 @@
 // mainwindow.cpp
 #include "mainwindow.h"
 
+#include "ipcmanager.h"
+#include "logger.h"
+#include "traymanager.h"
+#include "webenginehelper.h"
 #include <KIconDialog>
 #include <KIconLoader>
 #include <KNotification>
+#include <QCheckBox>
 #include <QCloseEvent>
+#include <QColor>
 #include <QDialog>
 #include <QDir>
 #include <QFormLayout>
@@ -12,7 +18,6 @@
 #include <QLineEdit>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QCheckBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QShortcut>
@@ -22,23 +27,23 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QVBoxLayout>
+#include <QWebEngineView>
 #include <cmath>
 #include <unistd.h>
-#include <QColor>
-#include <QWebEngineView>
-#include "logger.h"
-#include "ipcmanager.h"
-#include "traymanager.h"
-#include "webenginehelper.h"
 
 static constexpr int DEFAULT_W = 1200;
 static constexpr int DEFAULT_H = 800;
 // <html><body style="background-color: #1e1e1e;"></body></html>
 static const QUrl DARK_BLANK_URL("data:text/html;base64,PGh0bWw+PGJvZHkgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICMxZTFlMWU7Ij48L2JvZHk+PC9odG1sPg==");
 
-MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
-    : QMainWindow(parent), config(config), view(new QWebEngineView(this)), web(nullptr),
-      tray(nullptr), ipc(nullptr) {
+MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
+    : QMainWindow(parent)
+    , config(config)
+    , view(new QWebEngineView(this))
+    , web(nullptr)
+    , tray(nullptr)
+    , ipc(nullptr)
+{
     Logger::log("MainWindow constructor");
     // Prevent Qt from quitting when last window is hidden
     qApp->setQuitOnLastWindowClosed(false);
@@ -61,7 +66,8 @@ MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
 
     web = new WebEngineHelper(view, &config, this);
     web->initialize();
-    
+
+    // comment by: devlinman
     // Set background color to dark to prevent flashbangs
     if (view->page()) {
         view->page()->setBackgroundColor(QColor("#1e1e1e"));
@@ -134,7 +140,7 @@ MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
     connect(ipc, &IpcManager::raiseRequested, this, &MainWindow::showAndRaise);
     connect(ipc, &IpcManager::hideRequested, this, &MainWindow::hide);
     connect(ipc, &IpcManager::openUrlRequested, this,
-            &MainWindow::handleIncomingUrl);
+        &MainWindow::handleIncomingUrl);
     ipc->start();
 
     memoryTimer = new QTimer(this);
@@ -153,7 +159,7 @@ MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
     auto *quitShortcut = new QShortcut(QKeySequence::Quit, this);
     quitShortcut->setContext(Qt::ApplicationShortcut);
     connect(quitShortcut, &QShortcut::activated, this,
-            [this] { handleExitRequest(); });
+        [this] { handleExitRequest(); });
 
     auto *fullQuitShortcut = new QShortcut(QKeySequence("Ctrl+Shift+Q"), this);
     fullQuitShortcut->setContext(Qt::ApplicationShortcut);
@@ -167,8 +173,7 @@ MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
     QUrl targetUrl = getTargetUrl();
 
     if (config.useLessMemory() && config.startMinimizedInTray()) {
-        Logger::log("Low-memory startup: Delaying load of " +
-                    targetUrl.toString());
+        Logger::log("Low-memory startup: Delaying load of " + targetUrl.toString());
         view->setUrl(DARK_BLANK_URL);
 
         int interval = config.backgroundCheckInterval();
@@ -195,7 +200,8 @@ MainWindow::MainWindow(ConfigManager& config, QWidget *parent)
     }
 }
 
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
     clearSendMessageUrl();
     if (config.rememberWindowSize())
         config.setWindowSize(size());
@@ -203,14 +209,16 @@ MainWindow::~MainWindow() {
     config.sync();
 }
 
-void MainWindow::clearSendMessageUrl() {
+void MainWindow::clearSendMessageUrl()
+{
     if (!sendMessageURL.isEmpty()) {
         sendMessageURL.clear();
         Logger::log("Lifecycle Event: sendMessageURL cleared from memory.");
     }
 }
 
-void MainWindow::handleIncomingUrl(const QUrl &url) {
+void MainWindow::handleIncomingUrl(const QUrl& url)
+{
     // Logger::log("Handling incoming URL: " + url.toString());
     showAndRaise();
 
@@ -263,9 +271,10 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
 }
 
 // unified show / raise behavior
-void MainWindow::showAndRaise() {
+void MainWindow::showAndRaise()
+{
     if (isMinimized())
-        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);// Bitwise | has lower precedence than &
+        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive); // Bitwise | has lower precedence than &
 
     show();
     raise();
@@ -273,18 +282,20 @@ void MainWindow::showAndRaise() {
 
     m_hasUnread = false;
     if (tray) { // be consistant
-    tray->setUnreadIndicator(false);
+        tray->setUnreadIndicator(false);
     }
 }
 
-void MainWindow::handleMessageDetected() {
+void MainWindow::handleMessageDetected()
+{
     if (!isActiveWindow() || isMinimized() || !isVisible()) {
         m_hasUnread = true;
         tray->setUnreadIndicator(true);
     }
 }
 
-void MainWindow::handleUnreadChanged(bool hasUnread) {
+void MainWindow::handleUnreadChanged(bool hasUnread)
+{
     if (hasUnread && (!isActiveWindow() || isMinimized() || !isVisible())) {
         m_hasUnread = true;
         tray->setUnreadIndicator(true);
@@ -296,7 +307,8 @@ void MainWindow::handleUnreadChanged(bool hasUnread) {
     }
 }
 
-void MainWindow::startPeriodicCheck() {
+void MainWindow::startPeriodicCheck()
+{
     if (!config.useLessMemory() || isVisible()) {
         periodicCheckTimer->stop();
         return;
@@ -311,32 +323,39 @@ void MainWindow::startPeriodicCheck() {
     }
 }
 
-void MainWindow::performPeriodicCheck() {
+void MainWindow::performPeriodicCheck()
+{
     Logger::log("Periodic check: Loading in background for 30 seconds");
     m_isCheckingInMenu = true;
     updateMemoryState(true);
     activeCheckTimer->start(30000); // 30 seconds
 }
 
-void MainWindow::finishPeriodicCheck() {
+void MainWindow::finishPeriodicCheck()
+{
     Logger::log("Periodic check: 30 seconds elapsed, unloading");
     m_isCheckingInMenu = false;
     updateMemoryState();
 }
 
 // SINGLE exit decision point
-void MainWindow::handleExitRequest() {
+void MainWindow::handleExitRequest()
+{
     if (config.minimizeToTray()) {
         Logger::log("Minimizing to tray instead of quitting.");
         hide();
     } else {
         clearSendMessageUrl();
         Logger::log("Quitting application.");
+        //      Suppress "Leave site?" dialogs
+        if (view)
+            view->setProperty("suppressUnload", true);
         qApp->quit();
     }
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent* event)
+{
     if (config.minimizeToTray()) {
         Logger::log("Close event ignored -> Minimizing to tray.");
         hide();
@@ -344,12 +363,16 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     } else {
         clearSendMessageUrl();
         Logger::log("Close event accepted -> Quitting.");
+        //      Suppress "Leave site?" dialogs
+        if (view)
+            view->setProperty("suppressUnload", true);
         event->accept();
         qApp->quit();
     }
 }
 
-void MainWindow::hideEvent(QHideEvent *event) {
+void MainWindow::hideEvent(QHideEvent* event)
+{
     QMainWindow::hideEvent(event);
     clearSendMessageUrl();
     updateMemoryState();
@@ -363,7 +386,8 @@ void MainWindow::hideEvent(QHideEvent *event) {
     }
 }
 
-void MainWindow::showEvent(QShowEvent *event) {
+void MainWindow::showEvent(QShowEvent* event)
+{
     QMainWindow::showEvent(event);
     updateMemoryState();
     periodicCheckTimer->stop();
@@ -375,7 +399,8 @@ void MainWindow::showEvent(QShowEvent *event) {
     }
 }
 
-void MainWindow::changeEvent(QEvent *event) {
+void MainWindow::changeEvent(QEvent* event)
+{
     if (event->type() == QEvent::ActivationChange) {
         if (isActiveWindow()) {
             m_hasUnread = false;
@@ -387,7 +412,8 @@ void MainWindow::changeEvent(QEvent *event) {
     QMainWindow::changeEvent(event);
 }
 
-void MainWindow::updateMemoryState(bool forceLoad) {
+void MainWindow::updateMemoryState(bool forceLoad)
+{
     if (!view)
         return;
 
@@ -397,8 +423,14 @@ void MainWindow::updateMemoryState(bool forceLoad) {
         // If hidden and memory optimization is ON, and we aren't forcing a load for a check, unload
         if (view->url() != DARK_BLANK_URL && view->url().toString() != "about:blank") {
             Logger::log("Use Less Memory: Unloading content to dark blank page");
+            // Suppress "Leave site?" dialogs
+            view->setProperty("suppressUnload", true);
             view->stop();
             view->setUrl(DARK_BLANK_URL);
+            QTimer::singleShot(1000, view, [this] {
+                if (view)
+                    view->setProperty("suppressUnload", false);
+            });
         }
     } else {
         // If visible OR memory optimization is OFF (or forced), ensure content is loaded
@@ -409,11 +441,14 @@ void MainWindow::updateMemoryState(bool forceLoad) {
             } else {
                 view->setUrl(getTargetUrl());
             }
+            // comment by: devlinman
+            //           Not setting `suppressUnload` property here because we are setting it before the app is closed/exited.
         }
     }
 }
 
-QUrl MainWindow::getTargetUrl() const {
+QUrl MainWindow::getTargetUrl() const
+{
     QString targetUrlStr = config.customUrl();
     if (targetUrlStr.isEmpty()) {
         targetUrlStr = "https://web.whatsapp.com";
@@ -421,14 +456,14 @@ QUrl MainWindow::getTargetUrl() const {
 
     QUrl targetUrl(targetUrlStr);
     if (!targetUrl.isValid() || targetUrl.scheme().isEmpty()) {
-        Logger::log("Invalid Custom URL: " + targetUrlStr +
-                    " -> Fallback to Google.");
+        Logger::log("Invalid Custom URL: " + targetUrlStr + " -> Fallback to Google.");
         targetUrl = QUrl("https://google.com");
     }
     return targetUrl;
 }
 
-void MainWindow::checkMemoryUsage() {
+void MainWindow::checkMemoryUsage()
+{
     int limitGb = config.memoryLimit();
     if (limitGb <= 0)
         return;
@@ -437,7 +472,7 @@ void MainWindow::checkMemoryUsage() {
     pid_t pgid = getpgrp();
 
     QProcess ps;
-    ps.start("ps", {"-o", "rss=", "-g", QString::number(pgid)});
+    ps.start("ps", { "-o", "rss=", "-g", QString::number(pgid) });
     if (ps.waitForFinished()) {
         QString output = ps.readAllStandardOutput();
         QStringList lines = output.split('\n', Qt::SkipEmptyParts);
@@ -450,18 +485,18 @@ void MainWindow::checkMemoryUsage() {
     if (totalGb > limitGb) {
         Logger::log(QString("MEMORY KILL SWITCH TRIGGERED: %1 GB used, limit "
                             "is %2 GB. Quitting.")
-                        .arg(totalGb, 0, 'f', 2)
-                        .arg(limitGb));
+                .arg(totalGb, 0, 'f', 2)
+                .arg(limitGb));
         qApp->quit();
     }
 }
 
-void MainWindow::ensureDesktopFile(const QString &iconPath) {
+void MainWindow::ensureDesktopFile(const QString& iconPath)
+{
     if (iconPath.isEmpty())
         return;
 
-    QString localShareAppsDir =
-        QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    QString localShareAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
 
     QDir appsDir(localShareAppsDir);
     appsDir.mkpath(".");
@@ -477,6 +512,9 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
             desktopFile.close();
             // Check if existing file has the same icon
             if (content.contains("Icon=" + iconPath + "\n")) {
+                needToUpdate = false;
+            }
+            if (content.contains("Exec=" + QCoreApplication::applicationFilePath() + "%u" + "\n")) {
                 needToUpdate = false;
             }
         }
@@ -514,7 +552,8 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
     }
 }
 
-void MainWindow::rebuildKCache() {
+void MainWindow::rebuildKCache()
+{
     QString kbuild = QStandardPaths::findExecutable("kbuildsycoca6");
     if (kbuild.isEmpty()) {
         kbuild = QStandardPaths::findExecutable("kbuildsycoca5");
@@ -581,7 +620,7 @@ void MainWindow::setupMenus() {
     rememberDl->setCheckable(true);
     rememberDl->setChecked(config.rememberDownloadPaths());
     connect(rememberDl, &QAction::toggled,
-            [&](bool v) { config.setRememberDownloadPaths(v); });
+        [&](bool v) { config.setRememberDownloadPaths(v); });
 
     general->addSeparator();
 
@@ -607,8 +646,7 @@ void MainWindow::setupMenus() {
             "<li><b>Ctrl+Q</b> — Quit or hide the app (depending on "
             "configuration)</li>"
             "<li><b>Ctrl+Shift+Q</b> — Quit the app completely</li>"
-            "</ul>"
-        );
+            "</ul>");
     });
     auto *quitAction = general->addAction(
         QIcon::fromTheme("application-exit"),
@@ -622,7 +660,7 @@ void MainWindow::setupMenus() {
     maxDef->setCheckable(true);
     maxDef->setChecked(config.maximizedByDefault());
     connect(maxDef, &QAction::toggled,
-            [&](bool v) { config.setMaximizedByDefault(v); });
+        [&](bool v) { config.setMaximizedByDefault(v); });
 
     auto *remember = window->addAction("Remember Window Size");
     this->addAction(remember);
@@ -636,7 +674,7 @@ void MainWindow::setupMenus() {
     trayOpt->setCheckable(true);
     trayOpt->setChecked(config.minimizeToTray());
     connect(trayOpt, &QAction::toggled,
-            [&](bool v) { config.setMinimizeToTray(v); });
+        [&](bool v) { config.setMinimizeToTray(v); });
 
     // --- System ---
     auto *autostart = system->addAction("Autostart on Login");
@@ -644,14 +682,14 @@ void MainWindow::setupMenus() {
     autostart->setCheckable(true);
     autostart->setChecked(config.autostartOnLogin());
     connect(autostart, &QAction::toggled,
-            [&](bool v) { config.setAutostartOnLogin(v); });
+        [&](bool v) { config.setAutostartOnLogin(v); });
 
     auto *startMin = system->addAction("Start Minimized in Tray");
     this->addAction(startMin);
     startMin->setCheckable(true);
     startMin->setChecked(config.startMinimizedInTray());
     connect(startMin, &QAction::toggled,
-            [&](bool v) { config.setStartMinimizedInTray(v); });
+        [&](bool v) { config.setStartMinimizedInTray(v); });
 
     auto *trayInd = system->addAction("Show tray indicator");
     this->addAction(trayInd);
@@ -667,7 +705,7 @@ void MainWindow::setupMenus() {
     notifications->setCheckable(true);
     notifications->setChecked(config.systemNotifications());
     connect(notifications, &QAction::toggled,
-            [&](bool v) { config.setSystemNotifications(v); });
+        [&](bool v) { config.setSystemNotifications(v); });
 
     auto *mute = system->addAction("Mute Sounds");
     this->addAction(mute);
@@ -768,26 +806,26 @@ void MainWindow::setupMenus() {
     auto *reload = advanced->addAction(
         QIcon::fromTheme("view-refresh"),
         "Reload Config and Cache", [&] {
-        Logger::log("Reloading config and cache...");
-        QDir(config.configDir()).removeRecursively();
-        QDir(QStandardPaths::writableLocation(
-                 QStandardPaths::GenericCacheLocation) +
-             "/whatsit")
-            .removeRecursively();
-        QProcess::startDetached(qApp->applicationFilePath());
-        qApp->quit();
-    });
+            Logger::log("Reloading config and cache...");
+            QDir(config.configDir()).removeRecursively();
+            QDir(QStandardPaths::writableLocation(
+                     QStandardPaths::GenericCacheLocation)
+                + "/whatsit")
+                .removeRecursively();
+            QProcess::startDetached(qApp->applicationFilePath());
+            qApp->quit();
+        });
     this->addAction(reload);
 
     auto *delProfile = advanced->addAction(
         QIcon::fromTheme("edit-delete"),
         "Delete Profile and Restart", [&] {
-        Logger::log("Deleting profile and restarting...");
-        QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
-            .removeRecursively();
-        QProcess::startDetached(qApp->applicationFilePath());
-        qApp->quit();
-    });
+            Logger::log("Deleting profile and restarting...");
+            QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                .removeRecursively();
+            QProcess::startDetached(qApp->applicationFilePath());
+            qApp->quit();
+        });
     this->addAction(delProfile);
 
     auto *customize = advanced->addAction(
@@ -816,7 +854,7 @@ void MainWindow::setupMenus() {
         auto *tooltipCheck = new QCheckBox("Show Tooltip", &dlg);
         tooltipCheck->setChecked(config.showTrayTooltip());
 
-        auto *intervalSlider = new QSlider(Qt::Horizontal, &dlg);
+        auto* intervalSlider = new QSlider(Qt::Horizontal, &dlg);
         intervalSlider->setRange(0, 5);
         intervalSlider->setTickPosition(QSlider::TicksBelow);
         intervalSlider->setTickInterval(1);
@@ -889,7 +927,7 @@ void MainWindow::setupMenus() {
         layout->addRow("App Icon:", appIconBtn);
         layout->addRow("Wake Up:", intervalLabel);
         layout->addRow("", intervalSlider);
-        
+
         layout->addItem(new QSpacerItem(0, 10, QSizePolicy::Minimum, QSizePolicy::Fixed));
         layout->addRow("", tooltipCheck);
 
@@ -897,8 +935,7 @@ void MainWindow::setupMenus() {
         layout->addItem(new QSpacerItem(
             0, 0,
             QSizePolicy::Minimum,
-            QSizePolicy::Expanding
-        ));
+            QSizePolicy::Expanding));
 
         layout->addRow(btns);
 
@@ -943,7 +980,7 @@ void MainWindow::setupMenus() {
             config.setCustomAppIcon(selectedAppIcon);
             config.setBackgroundCheckInterval(intervalSlider->value());
             config.setShowTrayTooltip(tooltipCheck->isChecked());
-            
+
             if (tray) {
                 tray->setTooltipEnabled(tooltipCheck->isChecked());
             }
