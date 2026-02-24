@@ -3,20 +3,19 @@
 #include "configmanager.h"
 #include "logger.h"
 
-#include <QWebEngineView>
-#include <QWebEnginePage>
-#include <QWebEngineProfile>
-#include <QWebEnginePermission>
-#include <QWebEngineSettings>
-#include <QWebEngineFullScreenRequest>
-#include <QWebEngineNotification>
 #include <KNotification>
-#include <QWebEngineDownloadRequest>
 #include <QDesktopServices>
-#include <QStandardPaths>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QWebEngineDownloadRequest>
+#include <QWebEngineNotification>
+#include <QWebEnginePage>
+#include <QWebEnginePermission>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
+#include <QWebEngineView>
 
 namespace {
 
@@ -45,6 +44,15 @@ namespace {
             }
             Logger::log(QString("JS Console: %1 (Line %2, Source: %3)").arg(message).arg(lineNumber).arg(sourceID));
             QWebEnginePage::javaScriptConsoleMessage(level, message, lineNumber, sourceID);
+        }
+        bool javaScriptConfirm(const QUrl &securityOrigin, const QString &msg) override
+        {
+            auto *v = qobject_cast<QWebEngineView*>(parent());
+            if (v && v->property("suppressUnload").toBool()) {
+                Logger::log("WebEngineHelper: Suppressing 'Leave site?' dialog (confirm).");
+                return true;
+            }
+            return QWebEnginePage::javaScriptConfirm(securityOrigin, msg);
         }
 
         bool acceptNavigationRequest(const QUrl &url,
@@ -100,10 +108,8 @@ m_config(config)
 void WebEngineHelper::initialize()
 {
     Logger::log("WebEngineHelper::initialize");
-    const QString dataPath =
-    QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    const QString cachePath =
-    QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString cachePath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 
     QDir().mkpath(dataPath);
     QDir().mkpath(cachePath);
@@ -118,7 +124,11 @@ void WebEngineHelper::initialize()
         QWebEngineProfile::ForcePersistentCookies);
 
     connect(m_profile, &QWebEngineProfile::downloadRequested,
-            this, &WebEngineHelper::handleDownloadRequested);
+        this, &WebEngineHelper::handleDownloadRequested);
+
+    m_profile->settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true); // added just in case; idk if whatsapp call ui need fullscreen
+    m_profile->settings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false); // this too; useful for remote audio/video streams in chromium
+    m_profile->settings()->setAttribute(QWebEngineSettings::ScreenCaptureEnabled, true); // we will add for future use since screen share is supported in video calls
 
     // Notification Presenter
     m_profile->setNotificationPresenter([this](std::unique_ptr<QWebEngineNotification> notification) {
@@ -183,17 +193,56 @@ void WebEngineHelper::initialize()
     connect(m_view, &QWebEngineView::titleChanged, this, &WebEngineHelper::handleTitleChanged);
 
     connect(page, &QWebEnginePage::permissionRequested,
-            page, [page](QWebEnginePermission permission) {
-        if (permission.permissionType() == QWebEnginePermission::PermissionType::Notifications) {
-            Logger::log("WebEngineHelper: Notification Permission Requested via QWebEnginePermission");
-            Logger::log("Origin: " + permission.origin().toString());
-            Logger::log("Granting permission...");
-            permission.grant();
-            Logger::log("Permission granted.");
-        } else {
-             Logger::log("WebEngineHelper: Unknown Permission Requested");
+            this, [this](QWebEnginePermission permission) {
+
+        const QUrl origin = permission.origin();
+        const QString host = origin.host();
+
+        const bool isWhatsapp = (host == "web.whatsapp.com") || (host.endsWith(".whatsapp.com"));
+        const auto type = permission.permissionType();
+
+        Logger::log("WebEngineHelper: Permission requested");
+        Logger::log("Type: " + QString::number(static_cast<int>(type)));
+
+        if (!isWhatsapp) { // if not from whatsapp
+            Logger::log("Not Whatsapp, denying permission");
+            permission.deny();
+            return;
         }
-    });
+
+        switch (type) { // only noti, mic, cam and screencapture
+            case QWebEnginePermission::PermissionType::Notifications:
+                if (m_config->systemNotifications()) {
+                    Logger::log("WebEngineHelper: Notification Permission Requested via QWebEnginePermission");
+                    Logger::log("Granting permission...");
+                    permission.grant();
+                    Logger::log("Permission granted.");
+                } else {
+                    Logger::log("WebEngineHelper: Notification Permission disable in config: Deny");
+                    permission.deny(); // why didn't you add this before? wait can we even deny notification permission?
+                }                     // or did you automatically grant the permission just like i wrote for mic and cam?
+                break;                // I think you did. oh well, if anyone wants they can deny it in config manually
+
+            case QWebEnginePermission::PermissionType::MediaAudioCapture:
+            case QWebEnginePermission::PermissionType::MediaVideoCapture:
+            case QWebEnginePermission::PermissionType::MediaAudioVideoCapture:
+                Logger::log("WebEngineHelper:Granting media capture permission (mic/cam)");
+                permission.grant();
+                break;
+
+            case QWebEnginePermission::PermissionType::DesktopVideoCapture:
+            case QWebEnginePermission::PermissionType::DesktopAudioVideoCapture:
+                Logger::log("WebEngineHelper: Desktop capture permission (screen share)");
+                permission.grant();
+                break;
+
+            default: // deny any other permission
+                Logger::log("Origin: " + permission.origin().toString());
+                Logger::log("WebEngineHelper: Unknown Permission Requested");
+                permission.deny();
+                break;
+            }
+        });
 
     setAudioMuted(m_config->muteAudio());
 }
@@ -216,6 +265,8 @@ void WebEngineHelper::handleTitleChanged(const QString &title)
 {
     // WhatsApp unread titles usually look like "(1) WhatsApp" or similar
     bool hasUnread = title.contains('(') && title.contains(')');
+    // comment by: devlinman
+    // int number_of_notifications =
     emit unreadChanged(hasUnread);
 }
 
@@ -229,7 +280,7 @@ void WebEngineHelper::setAudioMuted(bool muted)
 
 void WebEngineHelper::handleDownloadRequested(QWebEngineDownloadRequest *download)
 {
-    // Debug: log download file name. disabled for privacy.
+    // // Debug: log download file name. disabled for privacy.
     // Logger::log("Download requested: " + download->suggestedFileName());
     Logger::log("Download requested");
     QString baseDir = m_config->downloadPath();
@@ -238,14 +289,12 @@ void WebEngineHelper::handleDownloadRequested(QWebEngineDownloadRequest *downloa
             QStandardPaths::DownloadLocation);
     }
 
-    const QString suggested =
-    QDir(baseDir).filePath(download->suggestedFileName());
+    const QString suggested = QDir(baseDir).filePath(download->suggestedFileName());
 
     const QString filePath = QFileDialog::getSaveFileName(
         m_view,
         tr("Save File"),
-            suggested
-    );
+        suggested);
 
     if (filePath.isEmpty()) {
         Logger::log("File path is empty. Cancelling download");

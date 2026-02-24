@@ -15,7 +15,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
   public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(ConfigManager& config, QWidget *parent = nullptr); // inherit config from main
     ~MainWindow() override;
 
   protected:
@@ -56,7 +56,7 @@ class MainWindow : public QMainWindow {
     QWebEngineView *view;
     QUrl sendMessageURL;
 
-    ConfigManager config;
+    ConfigManager& config;
     WebEngineHelper *web;
     TrayManager *tray;
     IpcManager *ipc;
@@ -65,5 +65,5 @@ class MainWindow : public QMainWindow {
     QTimer *activeCheckTimer;
     QTimer *cursorHideTimer;
     bool m_hasUnread = false;
-    bool m_isCheckingInMenu = false;
+    bool m_isCheckingInMenu = false; // why are we using this?
 };

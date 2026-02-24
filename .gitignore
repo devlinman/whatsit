@@ -3,6 +3,9 @@
 build/
 cmake-build-*/
 
+# cache
+.cache
+
 # CMake artifacts
 CMakeCache.txt
 CMakeFiles/
@@ -31,5 +34,4 @@ Thumbs.db
 whatsit
 
 # Ignore these folders
-/ignore
-/package
+# /package

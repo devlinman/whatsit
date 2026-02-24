@@ -89,6 +89,7 @@ void IpcManager::start() {
                 }
             }
             s->disconnectFromServer();
+            s->deleteLater(); // To schedule QLocalSocket for deletion
         });
     });
 }

@@ -1,11 +1,17 @@
 // mainwindow.cpp
 #include "mainwindow.h"
 
+#include "ipcmanager.h"
+#include "logger.h"
+#include "traymanager.h"
+#include "webenginehelper.h"
 #include <KIconDialog>
 #include <KIconLoader>
 #include <KNotification>
 #include <QApplication>
+#include <QCheckBox>
 #include <QCloseEvent>
+#include <QColor>
 #include <QDialog>
 #include <QDir>
 #include <QFormLayout>
@@ -13,7 +19,6 @@
 #include <QLineEdit>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QCheckBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QShortcut>
@@ -23,23 +28,23 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QVBoxLayout>
+#include <QWebEngineView>
 #include <cmath>
 #include <unistd.h>
-#include <QColor>
-#include <QWebEngineView>
-#include "logger.h"
-#include "ipcmanager.h"
-#include "traymanager.h"
-#include "webenginehelper.h"
 
 static constexpr int DEFAULT_W = 1200;
 static constexpr int DEFAULT_H = 800;
 // <html><body style="background-color: #1e1e1e;"></body></html>
 static const QUrl DARK_BLANK_URL("data:text/html;base64,PGh0bWw+PGJvZHkgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6ICMxZTFlMWU7Ij48L2JvZHk+PC9odG1sPg==");
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), view(new QWebEngineView(this)), web(nullptr),
-      tray(nullptr), ipc(nullptr) {
+MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
+    : QMainWindow(parent)
+    , config(config)
+    , view(new QWebEngineView(this))
+    , web(nullptr)
+    , tray(nullptr)
+    , ipc(nullptr)
+{
     Logger::log("MainWindow constructor");
     
     cursorHideTimer = new QTimer(this);
@@ -52,7 +57,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(view);
 
-    config.load();
     Logger::setFileLoggingEnabled(config.debugLoggingEnabled());
 
     if (config.rememberWindowSize())
@@ -69,7 +73,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     web = new WebEngineHelper(view, &config, this);
     web->initialize();
-    
+
+    // comment by: devlinman
     // Set background color to dark to prevent flashbangs
     if (view->page()) {
         view->page()->setBackgroundColor(QColor("#1e1e1e"));
@@ -142,7 +147,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ipc, &IpcManager::raiseRequested, this, &MainWindow::showAndRaise);
     connect(ipc, &IpcManager::hideRequested, this, &MainWindow::hide);
     connect(ipc, &IpcManager::openUrlRequested, this,
-            &MainWindow::handleIncomingUrl);
+        &MainWindow::handleIncomingUrl);
     ipc->start();
 
     memoryTimer = new QTimer(this);
@@ -158,15 +163,12 @@ MainWindow::MainWindow(QWidget *parent)
     activeCheckTimer->setSingleShot(true);
     connect(activeCheckTimer, &QTimer::timeout, this, &MainWindow::finishPeriodicCheck);
 
-    // Install event filter to track mouse activity globally
-    qApp->installEventFilter(this);
-
-    auto *quitShortcut = new QShortcut(QKeySequence::Quit, this);
+    auto* quitShortcut = new QShortcut(QKeySequence::Quit, this);
     quitShortcut->setContext(Qt::ApplicationShortcut);
     connect(quitShortcut, &QShortcut::activated, this,
-            [this] { handleExitRequest(); });
+        [this] { handleExitRequest(); });
 
-    auto *fullQuitShortcut = new QShortcut(QKeySequence("Ctrl+Shift+Q"), this);
+    auto* fullQuitShortcut = new QShortcut(QKeySequence("Ctrl+Shift+Q"), this);
     fullQuitShortcut->setContext(Qt::ApplicationShortcut);
     connect(fullQuitShortcut, &QShortcut::activated, this, [this] {
         Logger::log("Ctrl+Shift+Q pressed -> Force Quitting application.");
@@ -178,8 +180,7 @@ MainWindow::MainWindow(QWidget *parent)
     QUrl targetUrl = getTargetUrl();
 
     if (config.useLessMemory() && config.startMinimizedInTray()) {
-        Logger::log("Low-memory startup: Delaying load of " +
-                    targetUrl.toString());
+        Logger::log("Low-memory startup: Delaying load of " + targetUrl.toString());
         view->setUrl(DARK_BLANK_URL);
 
         int interval = config.backgroundCheckInterval();
@@ -206,7 +207,8 @@ MainWindow::MainWindow(QWidget *parent)
     }
 }
 
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
     clearSendMessageUrl();
     if (config.rememberWindowSize())
         config.setWindowSize(size());
@@ -214,14 +216,16 @@ MainWindow::~MainWindow() {
     config.sync();
 }
 
-void MainWindow::clearSendMessageUrl() {
+void MainWindow::clearSendMessageUrl()
+{
     if (!sendMessageURL.isEmpty()) {
         sendMessageURL.clear();
         Logger::log("Lifecycle Event: sendMessageURL cleared from memory.");
     }
 }
 
-void MainWindow::handleIncomingUrl(const QUrl &url) {
+void MainWindow::handleIncomingUrl(const QUrl& url)
+{
     // Logger::log("Handling incoming URL: " + url.toString());
     showAndRaise();
 
@@ -262,7 +266,7 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
             // Debug:
             // Logger::log("Stored sendMessageURL: " +
             // sendMessageURL.toString());
-            Logger::log("Recieved valid sendMessageURL");
+            Logger::log("Received valid sendMessageURL");
 
             view->load(sendMessageURL);
 
@@ -274,33 +278,44 @@ void MainWindow::handleIncomingUrl(const QUrl &url) {
 }
 
 // unified show / raise behavior
-void MainWindow::showAndRaise() {
+void MainWindow::showAndRaise()
+{
     if (isMinimized())
-        setWindowState(windowState() & ~Qt::WindowMinimized | Qt::WindowActive);
+        setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive); // Bitwise | has lower precedence than &
 
     show();
     raise();
     activateWindow();
 
     m_hasUnread = false;
-    tray->setUnreadIndicator(false);
+    if (tray) { // be consistant
+        tray->setUnreadIndicator(false);
+    }
 }
 
-void MainWindow::handleMessageDetected() {
+void MainWindow::handleMessageDetected()
+{
     if (!isActiveWindow() || isMinimized() || !isVisible()) {
         m_hasUnread = true;
         tray->setUnreadIndicator(true);
     }
 }
 
-void MainWindow::handleUnreadChanged(bool hasUnread) {
+void MainWindow::handleUnreadChanged(bool hasUnread)
+{
     if (hasUnread && (!isActiveWindow() || isMinimized() || !isVisible())) {
         m_hasUnread = true;
         tray->setUnreadIndicator(true);
     }
+    if (!hasUnread) { // what if user reads the message in mobile or in browser? you are still gonna show unread noti??
+        m_hasUnread = false;
+        tray->setUnreadIndicator(false);
+        return;
+    }
 }
 
-void MainWindow::startPeriodicCheck() {
+void MainWindow::startPeriodicCheck()
+{
     if (!config.useLessMemory() || isVisible()) {
         periodicCheckTimer->stop();
         return;
@@ -315,32 +330,39 @@ void MainWindow::startPeriodicCheck() {
     }
 }
 
-void MainWindow::performPeriodicCheck() {
+void MainWindow::performPeriodicCheck()
+{
     Logger::log("Periodic check: Loading in background for 30 seconds");
     m_isCheckingInMenu = true;
     updateMemoryState(true);
     activeCheckTimer->start(30000); // 30 seconds
 }
 
-void MainWindow::finishPeriodicCheck() {
+void MainWindow::finishPeriodicCheck()
+{
     Logger::log("Periodic check: 30 seconds elapsed, unloading");
     m_isCheckingInMenu = false;
     updateMemoryState();
 }
 
 // SINGLE exit decision point
-void MainWindow::handleExitRequest() {
+void MainWindow::handleExitRequest()
+{
     if (config.minimizeToTray()) {
         Logger::log("Minimizing to tray instead of quitting.");
         hide();
     } else {
         clearSendMessageUrl();
         Logger::log("Quitting application.");
+        //      Suppress "Leave site?" dialogs
+        if (view)
+            view->setProperty("suppressUnload", true);
         qApp->quit();
     }
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent* event)
+{
     if (config.minimizeToTray()) {
         Logger::log("Close event ignored -> Minimizing to tray.");
         hide();
@@ -348,12 +370,16 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     } else {
         clearSendMessageUrl();
         Logger::log("Close event accepted -> Quitting.");
+        //      Suppress "Leave site?" dialogs
+        if (view)
+            view->setProperty("suppressUnload", true);
         event->accept();
         qApp->quit();
     }
 }
 
-void MainWindow::hideEvent(QHideEvent *event) {
+void MainWindow::hideEvent(QHideEvent* event)
+{
     QMainWindow::hideEvent(event);
     clearSendMessageUrl();
     updateMemoryState();
@@ -367,7 +393,8 @@ void MainWindow::hideEvent(QHideEvent *event) {
     }
 }
 
-void MainWindow::showEvent(QShowEvent *event) {
+void MainWindow::showEvent(QShowEvent* event)
+{
     QMainWindow::showEvent(event);
     updateMemoryState();
     periodicCheckTimer->stop();
@@ -379,7 +406,8 @@ void MainWindow::showEvent(QShowEvent *event) {
     }
 }
 
-void MainWindow::changeEvent(QEvent *event) {
+void MainWindow::changeEvent(QEvent* event)
+{
     if (event->type() == QEvent::ActivationChange) {
         if (isActiveWindow()) {
             m_hasUnread = false;
@@ -400,34 +428,8 @@ void MainWindow::changeEvent(QEvent *event) {
     QMainWindow::changeEvent(event);
 }
 
-void MainWindow::hideCursor() {
-    if (isFullScreen() && !QApplication::overrideCursor()) {
-        QApplication::setOverrideCursor(Qt::BlankCursor);
-    }
-}
-
-bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
-    if (event->type() == QEvent::MouseMove || 
-        event->type() == QEvent::KeyPress || 
-        event->type() == QEvent::MouseButtonPress ||
-        event->type() == QEvent::Wheel) {
-        
-        // If cursor is hidden, restore it
-        if (QApplication::overrideCursor()) {
-             while (QApplication::overrideCursor()) {
-                QApplication::restoreOverrideCursor();
-            }
-        }
-
-        // Reset the timer if we are in full screen
-        if (isFullScreen()) {
-            cursorHideTimer->start();
-        }
-    }
-    return QMainWindow::eventFilter(obj, event);
-}
-
-void MainWindow::updateMemoryState(bool forceLoad) {
+void MainWindow::updateMemoryState(bool forceLoad)
+{
     if (!view)
         return;
 
@@ -437,8 +439,14 @@ void MainWindow::updateMemoryState(bool forceLoad) {
         // If hidden and memory optimization is ON, and we aren't forcing a load for a check, unload
         if (view->url() != DARK_BLANK_URL && view->url().toString() != "about:blank") {
             Logger::log("Use Less Memory: Unloading content to dark blank page");
+            // Suppress "Leave site?" dialogs
+            view->setProperty("suppressUnload", true);
             view->stop();
             view->setUrl(DARK_BLANK_URL);
+            QTimer::singleShot(1000, view, [this] {
+                if (view)
+                    view->setProperty("suppressUnload", false);
+            });
         }
     } else {
         // If visible OR memory optimization is OFF (or forced), ensure content is loaded
@@ -449,11 +457,14 @@ void MainWindow::updateMemoryState(bool forceLoad) {
             } else {
                 view->setUrl(getTargetUrl());
             }
+            // comment by: devlinman
+            //           Not setting `suppressUnload` property here because we are setting it before the app is closed/exited.
         }
     }
 }
 
-QUrl MainWindow::getTargetUrl() const {
+QUrl MainWindow::getTargetUrl() const
+{
     QString targetUrlStr = config.customUrl();
     if (targetUrlStr.isEmpty()) {
         targetUrlStr = "https://web.whatsapp.com";
@@ -461,14 +472,14 @@ QUrl MainWindow::getTargetUrl() const {
 
     QUrl targetUrl(targetUrlStr);
     if (!targetUrl.isValid() || targetUrl.scheme().isEmpty()) {
-        Logger::log("Invalid Custom URL: " + targetUrlStr +
-                    " -> Fallback to Google.");
+        Logger::log("Invalid Custom URL: " + targetUrlStr + " -> Fallback to Google.");
         targetUrl = QUrl("https://google.com");
     }
     return targetUrl;
 }
 
-void MainWindow::checkMemoryUsage() {
+void MainWindow::checkMemoryUsage()
+{
     int limitGb = config.memoryLimit();
     if (limitGb <= 0)
         return;
@@ -477,11 +488,11 @@ void MainWindow::checkMemoryUsage() {
     pid_t pgid = getpgrp();
 
     QProcess ps;
-    ps.start("ps", {"-o", "rss=", "-g", QString::number(pgid)});
+    ps.start("ps", { "-o", "rss=", "-g", QString::number(pgid) });
     if (ps.waitForFinished()) {
         QString output = ps.readAllStandardOutput();
         QStringList lines = output.split('\n', Qt::SkipEmptyParts);
-        for (const QString &line : lines) {
+        for (const QString& line : lines) {
             totalRssKb += line.trimmed().toLongLong();
         }
     }
@@ -490,18 +501,18 @@ void MainWindow::checkMemoryUsage() {
     if (totalGb > limitGb) {
         Logger::log(QString("MEMORY KILL SWITCH TRIGGERED: %1 GB used, limit "
                             "is %2 GB. Quitting.")
-                        .arg(totalGb, 0, 'f', 2)
-                        .arg(limitGb));
+                .arg(totalGb, 0, 'f', 2)
+                .arg(limitGb));
         qApp->quit();
     }
 }
 
-void MainWindow::ensureDesktopFile(const QString &iconPath) {
+void MainWindow::ensureDesktopFile(const QString& iconPath)
+{
     if (iconPath.isEmpty())
         return;
 
-    QString localShareAppsDir =
-        QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    QString localShareAppsDir = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
 
     QDir appsDir(localShareAppsDir);
     appsDir.mkpath(".");
@@ -517,6 +528,10 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
             desktopFile.close();
             // Check if existing file has the same icon
             if (content.contains("Icon=" + iconPath + "\n")) {
+                needToUpdate = false;
+            }
+            // Check if existing file has correct app exec path
+            if (content.contains("Exec=" + QCoreApplication::applicationFilePath() + "%u\n")) {
                 needToUpdate = false;
             }
         }
@@ -554,7 +569,8 @@ void MainWindow::ensureDesktopFile(const QString &iconPath) {
     }
 }
 
-void MainWindow::rebuildKCache() {
+void MainWindow::rebuildKCache()
+{
     QString kbuild = QStandardPaths::findExecutable("kbuildsycoca6");
     if (kbuild.isEmpty()) {
         kbuild = QStandardPaths::findExecutable("kbuildsycoca5");
@@ -569,15 +585,16 @@ void MainWindow::rebuildKCache() {
     }
 }
 
-void MainWindow::setupMenus() {
-    auto *general = menuBar()->addMenu("General");
-    auto *viewMenu = menuBar()->addMenu("View");
-    auto *window = menuBar()->addMenu("Window");
-    auto *system = menuBar()->addMenu("System");
-    auto *advanced = menuBar()->addMenu("Advanced");
+void MainWindow::setupMenus()
+{
+    auto* general = menuBar()->addMenu("General");
+    auto* viewMenu = menuBar()->addMenu("View");
+    auto* window = menuBar()->addMenu("Window");
+    auto* system = menuBar()->addMenu("System");
+    auto* advanced = menuBar()->addMenu("Advanced");
 
     // --- View ---
-    auto *zoomIn = viewMenu->addAction(
+    auto* zoomIn = viewMenu->addAction(
         QIcon::fromTheme("zoom-in"),
         "Zoom In");
     this->addAction(zoomIn);
@@ -589,7 +606,7 @@ void MainWindow::setupMenus() {
         config.setZoomLevel(newZoom);
     });
 
-    auto *zoomOut = viewMenu->addAction(
+    auto* zoomOut = viewMenu->addAction(
         QIcon::fromTheme("zoom-out"),
         "Zoom Out");
     this->addAction(zoomOut);
@@ -603,7 +620,7 @@ void MainWindow::setupMenus() {
         config.setZoomLevel(newZoom);
     });
 
-    auto *zoomReset = viewMenu->addAction(
+    auto* zoomReset = viewMenu->addAction(
         QIcon::fromTheme("zoom-original"),
         "Reset Zoom");
     this->addAction(zoomReset);
@@ -614,18 +631,18 @@ void MainWindow::setupMenus() {
     });
 
     // --- General ---
-    auto *rememberDl = general->addAction(
+    auto* rememberDl = general->addAction(
         QIcon::fromTheme("download"),
         "Remember subsequent Download paths");
     this->addAction(rememberDl);
     rememberDl->setCheckable(true);
     rememberDl->setChecked(config.rememberDownloadPaths());
     connect(rememberDl, &QAction::toggled,
-            [&](bool v) { config.setRememberDownloadPaths(v); });
+        [&](bool v) { config.setRememberDownloadPaths(v); });
 
     general->addSeparator();
 
-    auto *aboutAction = general->addAction(
+    auto* aboutAction = general->addAction(
         QIcon::fromTheme("help-about"),
         "About Whatsit");
     this->addAction(aboutAction);
@@ -647,53 +664,52 @@ void MainWindow::setupMenus() {
             "<li><b>Ctrl+Q</b> — Quit or hide the app (depending on "
             "configuration)</li>"
             "<li><b>Ctrl+Shift+Q</b> — Quit the app completely</li>"
-            "</ul>"
-        );
+            "</ul>");
     });
-    auto *quitAction = general->addAction(
+    auto* quitAction = general->addAction(
         QIcon::fromTheme("application-exit"),
         "Quit App");
     this->addAction(quitAction);
     connect(quitAction, &QAction::triggered, [this] { qApp->quit(); });
 
     // --- Window ---
-    auto *maxDef = window->addAction("Maximized by Default");
+    auto* maxDef = window->addAction("Maximized by Default");
     this->addAction(maxDef);
     maxDef->setCheckable(true);
     maxDef->setChecked(config.maximizedByDefault());
     connect(maxDef, &QAction::toggled,
-            [&](bool v) { config.setMaximizedByDefault(v); });
+        [&](bool v) { config.setMaximizedByDefault(v); });
 
-    auto *remember = window->addAction("Remember Window Size");
+    auto* remember = window->addAction("Remember Window Size");
     this->addAction(remember);
     remember->setCheckable(true);
     remember->setChecked(config.rememberWindowSize());
     connect(remember, &QAction::toggled,
-            [&](bool v) { config.setRememberWindowSize(v); });
+        [&](bool v) { config.setRememberWindowSize(v); });
 
-    auto *trayOpt = window->addAction("Minimize to Tray on Close");
+    auto* trayOpt = window->addAction("Minimize to Tray on Close");
     this->addAction(trayOpt);
     trayOpt->setCheckable(true);
     trayOpt->setChecked(config.minimizeToTray());
     connect(trayOpt, &QAction::toggled,
-            [&](bool v) { config.setMinimizeToTray(v); });
+        [&](bool v) { config.setMinimizeToTray(v); });
 
     // --- System ---
-    auto *autostart = system->addAction("Autostart on Login");
+    auto* autostart = system->addAction("Autostart on Login");
     this->addAction(autostart);
     autostart->setCheckable(true);
     autostart->setChecked(config.autostartOnLogin());
     connect(autostart, &QAction::toggled,
-            [&](bool v) { config.setAutostartOnLogin(v); });
+        [&](bool v) { config.setAutostartOnLogin(v); });
 
-    auto *startMin = system->addAction("Start Minimized in Tray");
+    auto* startMin = system->addAction("Start Minimized in Tray");
     this->addAction(startMin);
     startMin->setCheckable(true);
     startMin->setChecked(config.startMinimizedInTray());
     connect(startMin, &QAction::toggled,
-            [&](bool v) { config.setStartMinimizedInTray(v); });
+        [&](bool v) { config.setStartMinimizedInTray(v); });
 
-    auto *trayInd = system->addAction("Show tray indicator");
+    auto* trayInd = system->addAction("Show tray indicator");
     this->addAction(trayInd);
     trayInd->setCheckable(true);
     trayInd->setChecked(config.showTrayIndicator());
@@ -702,14 +718,14 @@ void MainWindow::setupMenus() {
         tray->setIndicatorEnabled(v);
     });
 
-    auto *notifications = system->addAction("Enable Notifications");
+    auto* notifications = system->addAction("Enable Notifications");
     this->addAction(notifications);
     notifications->setCheckable(true);
     notifications->setChecked(config.systemNotifications());
     connect(notifications, &QAction::toggled,
-            [&](bool v) { config.setSystemNotifications(v); });
+        [&](bool v) { config.setSystemNotifications(v); });
 
-    auto *mute = system->addAction("Mute Sounds");
+    auto* mute = system->addAction("Mute Sounds");
     this->addAction(mute);
     mute->setCheckable(true);
     mute->setChecked(config.muteAudio());
@@ -719,7 +735,7 @@ void MainWindow::setupMenus() {
     });
 
     // --- Advanced ---
-    auto *debug = advanced->addAction("Debug: Enable File Logging");
+    auto* debug = advanced->addAction("Debug: Enable File Logging");
     this->addAction(debug);
     debug->setCheckable(true);
     debug->setChecked(config.debugLoggingEnabled());
@@ -732,7 +748,7 @@ void MainWindow::setupMenus() {
         }
     });
 
-    auto *useLessMem = advanced->addAction("Use Less Memory");
+    auto* useLessMem = advanced->addAction("Use Less Memory");
     this->addAction(useLessMem);
     useLessMem->setCheckable(true);
     useLessMem->setChecked(config.useLessMemory());
@@ -749,7 +765,7 @@ void MainWindow::setupMenus() {
         }
     });
 
-    auto *memKill = advanced->addAction(
+    auto* memKill = advanced->addAction(
         QIcon::fromTheme("computer"),
         "Memory Kill Switch");
     this->addAction(memKill);
@@ -757,19 +773,19 @@ void MainWindow::setupMenus() {
         QDialog dlg(this);
         dlg.setWindowTitle("Memory Kill Switch");
         dlg.setMinimumSize(600, 300);
-        auto *layout = new QVBoxLayout(&dlg);
+        auto* layout = new QVBoxLayout(&dlg);
 
-        auto *label = new QLabel("Threshold (1GB - 4GB):", &dlg);
+        auto* label = new QLabel("Threshold (1GB - 4GB):", &dlg);
         layout->addWidget(label);
 
-        auto *slider = new QSlider(Qt::Horizontal, &dlg);
+        auto* slider = new QSlider(Qt::Horizontal, &dlg);
         slider->setMinimum(0); // 0 means disabled
         slider->setMaximum(4);
         slider->setTickPosition(QSlider::TicksBelow);
         slider->setTickInterval(1);
         slider->setValue(config.memoryLimit());
 
-        auto *valueLabel = new QLabel(&dlg);
+        auto* valueLabel = new QLabel(&dlg);
         auto updateLabel = [valueLabel](int val) {
             if (val == 0)
                 valueLabel->setText("Disabled");
@@ -782,9 +798,9 @@ void MainWindow::setupMenus() {
         layout->addWidget(slider);
         layout->addWidget(valueLabel);
 
-        auto *btnBox = new QHBoxLayout;
-        auto *saveBtn = new QPushButton("Save", &dlg);
-        auto *cancelBtn = new QPushButton("Cancel", &dlg);
+        auto* btnBox = new QHBoxLayout;
+        auto* saveBtn = new QPushButton("Save", &dlg);
+        auto* cancelBtn = new QPushButton("Cancel", &dlg);
         btnBox->addWidget(saveBtn);
         btnBox->addWidget(cancelBtn);
         layout->addLayout(btnBox);
@@ -805,32 +821,32 @@ void MainWindow::setupMenus() {
 
     advanced->addSeparator();
 
-    auto *reload = advanced->addAction(
+    auto* reload = advanced->addAction(
         QIcon::fromTheme("view-refresh"),
         "Reload Config and Cache", [&] {
-        Logger::log("Reloading config and cache...");
-        QDir(config.configDir()).removeRecursively();
-        QDir(QStandardPaths::writableLocation(
-                 QStandardPaths::GenericCacheLocation) +
-             "/whatsit")
-            .removeRecursively();
-        QProcess::startDetached(qApp->applicationFilePath());
-        qApp->quit();
-    });
+            Logger::log("Reloading config and cache...");
+            QDir(config.configDir()).removeRecursively();
+            QDir(QStandardPaths::writableLocation(
+                     QStandardPaths::GenericCacheLocation)
+                + "/whatsit")
+                .removeRecursively();
+            QProcess::startDetached(qApp->applicationFilePath());
+            qApp->quit();
+        });
     this->addAction(reload);
 
-    auto *delProfile = advanced->addAction(
+    auto* delProfile = advanced->addAction(
         QIcon::fromTheme("edit-delete"),
         "Delete Profile and Restart", [&] {
-        Logger::log("Deleting profile and restarting...");
-        QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
-            .removeRecursively();
-        QProcess::startDetached(qApp->applicationFilePath());
-        qApp->quit();
-    });
+            Logger::log("Deleting profile and restarting...");
+            QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                .removeRecursively();
+            QProcess::startDetached(qApp->applicationFilePath());
+            qApp->quit();
+        });
     this->addAction(delProfile);
 
-    auto *customize = advanced->addAction(
+    auto* customize = advanced->addAction(
         QIcon::fromTheme("configure"),
         "Customize App");
     this->addAction(customize);
@@ -839,30 +855,30 @@ void MainWindow::setupMenus() {
         dlg.setWindowTitle("Customize App");
         dlg.setMinimumSize(800, 400);
 
-        auto *layout = new QFormLayout(&dlg);
+        auto* layout = new QFormLayout(&dlg);
 
-        auto *urlEdit = new QLineEdit(&dlg);
+        auto* urlEdit = new QLineEdit(&dlg);
         urlEdit->setText(config.customUrl());
         urlEdit->setPlaceholderText("https://web.whatsapp.com");
 
-        auto *trayIconBtn = new QPushButton("Choose Tray Icon...", &dlg);
+        auto* trayIconBtn = new QPushButton("Choose Tray Icon...", &dlg);
         QString currentTrayIcon = config.customTrayIcon();
         QString selectedTrayIcon = currentTrayIcon;
 
-        auto *appIconBtn = new QPushButton("Choose App Icon...", &dlg);
+        auto* appIconBtn = new QPushButton("Choose App Icon...", &dlg);
         QString currentAppIcon = config.customAppIcon();
         QString selectedAppIcon = currentAppIcon;
 
-        auto *tooltipCheck = new QCheckBox("Show Tooltip", &dlg);
+        auto* tooltipCheck = new QCheckBox("Show Tooltip", &dlg);
         tooltipCheck->setChecked(config.showTrayTooltip());
 
-        auto *intervalSlider = new QSlider(Qt::Horizontal, &dlg);
+        auto* intervalSlider = new QSlider(Qt::Horizontal, &dlg);
         intervalSlider->setRange(0, 5);
         intervalSlider->setTickPosition(QSlider::TicksBelow);
         intervalSlider->setTickInterval(1);
         intervalSlider->setValue(config.backgroundCheckInterval());
 
-        auto *intervalLabel = new QLabel(&dlg);
+        auto* intervalLabel = new QLabel(&dlg);
         auto updateIntervalLabel = [intervalLabel](int val) {
             if (val == 0)
                 intervalLabel->setText("Background Check: Disabled");
@@ -916,10 +932,10 @@ void MainWindow::setupMenus() {
             }
         });
 
-        auto *btns = new QHBoxLayout;
-        auto *saveBtn = new QPushButton("Save", &dlg);
-        auto *removeBtn = new QPushButton("Remove Customizations", &dlg);
-        auto *cancelBtn = new QPushButton("Cancel", &dlg);
+        auto* btns = new QHBoxLayout;
+        auto* saveBtn = new QPushButton("Save", &dlg);
+        auto* removeBtn = new QPushButton("Remove Customizations", &dlg);
+        auto* cancelBtn = new QPushButton("Cancel", &dlg);
         btns->addWidget(saveBtn);
         btns->addWidget(removeBtn);
         btns->addWidget(cancelBtn);
@@ -929,7 +945,7 @@ void MainWindow::setupMenus() {
         layout->addRow("App Icon:", appIconBtn);
         layout->addRow("Wake Up:", intervalLabel);
         layout->addRow("", intervalSlider);
-        
+
         layout->addItem(new QSpacerItem(0, 10, QSizePolicy::Minimum, QSizePolicy::Fixed));
         layout->addRow("", tooltipCheck);
 
@@ -937,8 +953,7 @@ void MainWindow::setupMenus() {
         layout->addItem(new QSpacerItem(
             0, 0,
             QSizePolicy::Minimum,
-            QSizePolicy::Expanding
-        ));
+            QSizePolicy::Expanding));
 
         layout->addRow(btns);
 
@@ -965,7 +980,7 @@ void MainWindow::setupMenus() {
             if (!desktopFile.exists()) {
                 Logger::log("Desktop file not found; you're on your own.");
             }
-            if (!desktopFile.remove()) {
+            if (desktopFile.exists() && !desktopFile.remove()) { // you will only remove it if it exists bruh
                 Logger::log("Failed to remove desktop file.");
             } else {
                 Logger::log("Desktop file removed successfully.");
@@ -983,7 +998,7 @@ void MainWindow::setupMenus() {
             config.setCustomAppIcon(selectedAppIcon);
             config.setBackgroundCheckInterval(intervalSlider->value());
             config.setShowTrayTooltip(tooltipCheck->isChecked());
-            
+
             if (tray) {
                 tray->setTooltipEnabled(tooltipCheck->isChecked());
             }

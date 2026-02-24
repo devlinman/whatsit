@@ -6,12 +6,24 @@ file(READ "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt" files)
 string(REPLACE "\n" ";" files "${files}")
 
 foreach(file ${files})
-    message(STATUS "Removing $ENV{DESTDIR}${file}")
+    set(fullpath "$ENV{DESTDIR}${file}")
+
+    if(NOT EXISTS "${fullpath}")
+        message(FATAL_ERROR
+            "Uninstall error: File does not exist: ${fullpath}"
+        )
+    endif()
+
+    message(STATUS "Removing ${fullpath}")
+
     execute_process(
-        COMMAND rm -f "$ENV{DESTDIR}${file}"
+        COMMAND rm "${fullpath}"
         RESULT_VARIABLE rm_retval
     )
+
     if(NOT rm_retval EQUAL 0)
-        message(FATAL_ERROR "Failed to remove $ENV{DESTDIR}${file}")
+        message(FATAL_ERROR
+            "Failed to remove ${fullpath}"
+        )
     endif()
 endforeach()

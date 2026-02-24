@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     ConfigManager config;
     config.load();
 
-    MainWindow w;
+    MainWindow w(config); // pass config to MainWindow
     
     bool startMinimized = config.startMinimizedInTray();
     
