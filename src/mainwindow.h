@@ -65,5 +65,5 @@ class MainWindow : public QMainWindow {
     QTimer *activeCheckTimer;
     QTimer *cursorHideTimer;
     bool m_hasUnread = false;
-    bool m_isCheckingInMenu = false; // why are we using this?
+    bool m_isCheckingInMenu = false; // Tracks if we're in the middle of a periodic background check while minimized to tray
 };

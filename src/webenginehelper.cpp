@@ -7,6 +7,8 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
+#include <QWebEngineSettings>
+#include <QWebEngineFullScreenRequest>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QWebEngineDownloadRequest>

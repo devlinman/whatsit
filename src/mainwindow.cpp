@@ -52,6 +52,8 @@ MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
     cursorHideTimer->setSingleShot(true);
     connect(cursorHideTimer, &QTimer::timeout, this, &MainWindow::hideCursor);
 
+    qApp->installEventFilter(this);
+
     // Prevent Qt from quitting when last window is hidden
     qApp->setQuitOnLastWindowClosed(false);
 
@@ -426,6 +428,30 @@ void MainWindow::changeEvent(QEvent* event)
         }
     }
     QMainWindow::changeEvent(event);
+}
+
+void MainWindow::hideCursor() {
+    if (isFullScreen() && !QApplication::overrideCursor()) {
+        QApplication::setOverrideCursor(Qt::BlankCursor);
+    }
+}
+bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::MouseMove || 
+        event->type() == QEvent::KeyPress || 
+        event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::Wheel) {
+        // If cursor is hidden, restore it
+        if (QApplication::overrideCursor()) {
+             while (QApplication::overrideCursor()) {
+                QApplication::restoreOverrideCursor();
+            }
+        }
+        // Reset the timer if we are in full screen
+        if (isFullScreen()) {
+            cursorHideTimer->start();
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }
 
 void MainWindow::updateMemoryState(bool forceLoad)
