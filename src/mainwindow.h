@@ -3,13 +3,14 @@
 
 #include <QMainWindow>
 #include <QUrl>
+#include <memory>
 #include "configmanager.h"
+#include <QTimer>
 
 class QWebEngineView;
 class WebEngineHelper;
 class TrayManager;
 class IpcManager;
-class QTimer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -53,8 +54,8 @@ class MainWindow : public QMainWindow {
     TrayManager *tray;
     IpcManager *ipc;
     QTimer *memoryTimer;
-    QTimer *periodicCheckTimer;
-    QTimer *activeCheckTimer;
+    QTimer periodicCheckTimer;
+    QTimer activeCheckTimer;
     bool m_hasUnread = false;
     bool m_isCheckingInMenu = false; // why are we using this?
 };

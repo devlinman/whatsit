@@ -76,7 +76,17 @@ int main(int argc, char *argv[]) {
     }
 
     if (!startMinimized) {
-        w.show();
+      if (config.maximizedByDefault()) {
+          w.showMaximized();
+      } else {
+          w.show();
+      }
+    } else {
+        // If starting minimized but maximized by default,
+        // preserve maximized state for when shown later
+        if (config.maximizedByDefault()) {
+            w.setWindowState(Qt::WindowMaximized);
+        }
     }
 
     return app.exec();
