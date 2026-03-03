@@ -43,6 +43,8 @@ MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
     , web(nullptr)
     , tray(nullptr)
     , ipc(nullptr)
+    , periodicCheckTimer(this)
+    , activeCheckTimer(this)
 {
     Logger::log("MainWindow constructor");
     // Prevent Qt from quitting when last window is hidden
@@ -56,13 +58,6 @@ MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
         resize(config.windowSize());
     else
         resize(DEFAULT_W, DEFAULT_H);
-
-    if (config.maximizedByDefault()) {
-        if (!config.startMinimizedInTray())
-            showMaximized();
-        else
-            setWindowState(Qt::WindowMaximized);
-    }
 
     web = new WebEngineHelper(view, &config, this);
     web->initialize();
@@ -149,12 +144,10 @@ MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
         memoryTimer->start(30000); // Check every 30 seconds
     }
 
-    periodicCheckTimer = new QTimer(this);
-    connect(periodicCheckTimer, &QTimer::timeout, this, &MainWindow::startPeriodicCheck);
+    connect(&periodicCheckTimer, &QTimer::timeout, this, &MainWindow::startPeriodicCheck);
 
-    activeCheckTimer = new QTimer(this);
-    activeCheckTimer->setSingleShot(true);
-    connect(activeCheckTimer, &QTimer::timeout, this, &MainWindow::finishPeriodicCheck);
+    activeCheckTimer.setSingleShot(true);
+    connect(&activeCheckTimer, &QTimer::timeout, this, &MainWindow::finishPeriodicCheck);
 
     auto* quitShortcut = new QShortcut(QKeySequence::Quit, this);
     quitShortcut->setContext(Qt::ApplicationShortcut);
@@ -179,7 +172,7 @@ MainWindow::MainWindow(ConfigManager& config, QWidget* parent)
         int interval = config.backgroundCheckInterval();
         if (interval > 0) {
             Logger::log(QString("Starting periodic check timer (Startup): %1 minutes").arg(interval));
-            periodicCheckTimer->start(interval * 60 * 1000);
+            periodicCheckTimer.start(interval * 60 * 1000);
         }
     } else {
         Logger::log("Startup load: " + targetUrl.toString());
@@ -310,7 +303,7 @@ void MainWindow::handleUnreadChanged(bool hasUnread)
 void MainWindow::startPeriodicCheck()
 {
     if (!config.useLessMemory() || isVisible()) {
-        periodicCheckTimer->stop();
+        periodicCheckTimer.stop();
         return;
     }
 
@@ -319,7 +312,7 @@ void MainWindow::startPeriodicCheck()
         Logger::log("Auto-waking up for background check...");
         performPeriodicCheck();
     } else {
-        periodicCheckTimer->stop();
+        periodicCheckTimer.stop();
     }
 }
 
@@ -328,7 +321,7 @@ void MainWindow::performPeriodicCheck()
     Logger::log("Periodic check: Loading in background for 30 seconds");
     m_isCheckingInMenu = true;
     updateMemoryState(true);
-    activeCheckTimer->start(30000); // 30 seconds
+    activeCheckTimer.start(30000); // 30 seconds
 }
 
 void MainWindow::finishPeriodicCheck()
@@ -381,7 +374,7 @@ void MainWindow::hideEvent(QHideEvent* event)
         int interval = config.backgroundCheckInterval();
         if (interval > 0) {
             Logger::log(QString("Starting periodic check timer: %1 minutes").arg(interval));
-            periodicCheckTimer->start(interval * 60 * 1000);
+            periodicCheckTimer.start(interval * 60 * 1000);
         }
     }
 }
@@ -389,14 +382,16 @@ void MainWindow::hideEvent(QHideEvent* event)
 void MainWindow::showEvent(QShowEvent* event)
 {
     QMainWindow::showEvent(event);
+
     updateMemoryState();
-    periodicCheckTimer->stop();
-    activeCheckTimer->stop();
+
+    periodicCheckTimer.stop();
+    activeCheckTimer.stop();
 
     m_hasUnread = false;
-    if (tray) {
+
+    if (tray) 
         tray->setUnreadIndicator(false);
-    }
 }
 
 void MainWindow::changeEvent(QEvent* event)
@@ -742,10 +737,10 @@ void MainWindow::setupMenus()
         if (v && !isVisible()) {
             int interval = config.backgroundCheckInterval();
             if (interval > 0)
-                periodicCheckTimer->start(interval * 60 * 1000);
+                periodicCheckTimer.start(interval * 60 * 1000);
         } else {
-            periodicCheckTimer->stop();
-            activeCheckTimer->stop();
+            periodicCheckTimer.stop();
+            activeCheckTimer.stop();
         }
     });
 
