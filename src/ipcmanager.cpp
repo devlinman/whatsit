@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <QLocalSocket>
 #include <QUrl>
+#include <memory>
 
 static constexpr const char *IPC_NAME = "whatsit-ipc";
 
@@ -65,7 +66,12 @@ void IpcManager::start() {
 
     connect(&server, &QLocalServer::newConnection, this, [&] {
         auto *s = server.nextPendingConnection();
-        connect(s, &QLocalSocket::readyRead, this, [=] {
+
+        auto processed = std::make_shared<bool>(false);
+        auto processMessage = [=]() {
+            if (*processed || s->bytesAvailable() <= 0)
+                return;
+            *processed = true;
             QByteArray data = s->readAll();
             QString message = QString::fromUtf8(data);
             // Debug:
@@ -90,6 +96,11 @@ void IpcManager::start() {
             }
             s->disconnectFromServer();
             s->deleteLater(); // To schedule QLocalSocket for deletion
-        });
+        };
+
+        connect(s, &QLocalSocket::readyRead, this, processMessage);
+        // Handle data already buffered before the signal was connected
+        if (s->bytesAvailable() > 0)
+            processMessage();
     });
 }

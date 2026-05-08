@@ -16,12 +16,9 @@
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
 #include <QWebEngineView>
+#include <QRegularExpression>
 
 namespace {
-
-    const QString DEFAULT_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) "
-                                       "AppleWebKit/537.36 (KHTML, like Gecko) "
-                                       "Chrome/120.0.0.0 Safari/537.36";
 
     class WhatsitPage : public QWebEnginePage
     {
@@ -116,7 +113,23 @@ void WebEngineHelper::initialize()
 
     m_profile = new QWebEngineProfile("whatsit-profile", this);
 
-    m_profile->setHttpUserAgent(DEFAULT_USER_AGENT);
+    // Extract Chrome version from Qt's bundled Chromium UA, build a clean Linux desktop UA
+    QString qtUA = QWebEngineProfile::defaultProfile()->httpUserAgent();
+
+    QRegularExpression chromeRx("Chrome/[\\d.]+");
+    QRegularExpressionMatch m = chromeRx.match(qtUA);
+
+    QString chromeToken = m.hasMatch()
+        ? m.captured(0)
+        : "Chrome/124.0.0.0";
+
+    QString ua =
+        QString("Mozilla/5.0 (X11; Linux x86_64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "%1 Safari/537.36")
+            .arg(chromeToken);
+
+    m_profile->setHttpUserAgent(ua);
 
     m_profile->setPersistentStoragePath(dataPath);
     m_profile->setCachePath(cachePath);

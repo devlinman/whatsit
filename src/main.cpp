@@ -9,6 +9,8 @@
 int main(int argc, char *argv[]) {
     Logger::log("Application starting...");
 
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu-compositing");
+
     QApplication app(argc, argv);
     app.setApplicationName("whatsit");
     app.setOrganizationName("whatsit");
