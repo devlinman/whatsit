@@ -505,12 +505,10 @@ void MainWindow::ensureDesktopFile(const QString& iconPath)
         if (desktopFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QString content = desktopFile.readAll();
             desktopFile.close();
-            // Check if existing file has the same icon
-            if (content.contains("Icon=" + iconPath + "\n")) {
-                needToUpdate = false;
-            }
-            // Check if existing file has correct app exec path
-            if (content.contains("Exec=" + QCoreApplication::applicationFilePath() + "%u\n")) {
+            // Only skip update if BOTH icon and exec path match
+            bool iconMatches = content.contains("Icon=" + iconPath + "\n");
+            bool execMatches = content.contains("Exec=" + QCoreApplication::applicationFilePath() + " %u\n");
+            if (iconMatches && execMatches) {
                 needToUpdate = false;
             }
         }
